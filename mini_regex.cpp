@@ -170,7 +170,6 @@ bool mini_regex::parse_or()
         std::cout << "parse: '|' not enough text." << std::endl;
         return false;
     }
-    /* 根据栈的特性 先出的ip大于后出的 */
     exp2 = S2.top(); S2.pop();
     exp1 = S2.top(); S2.pop();
     if (exp1.ip > exp2.ip)
