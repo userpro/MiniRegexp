@@ -1,7 +1,7 @@
 #include "mini_regex.hpp"
 
 mini_regex::mini_regex()
-    :regexp(""),code(),token()
+    :regexp(""),Code(),Token(),Text(),S1(),S2(),Eval()
 {
 }
 
@@ -14,27 +14,25 @@ bool mini_regex::compile(const std::string& regexp_str)
 }
 
 
-bool mini_regex::match(const std::string& match_str, std::function<void(regex_result&)> callback)
+bool mini_regex::match(const std::string& match_str, std::function<void(_regex_result&)> callback)
 {
+    bool flag = false;
     target = match_str;
-    return evalute();
-    // return false;
+    flag = evalute();
+    if (callback) callback(regex_result);
+    return flag;
 }
 
 void mini_regex::_reset()
 {
     regexp = "";
     target = "";
-    for (std::vector<CODE_TYPE>::iterator i = code.begin(); i != code.end(); ++i)
-    {
-        if (i->first == MATCH)
-            delete(reinterpret_cast<std::string*>(i->second.first));
-    }
-    code.clear();
-    token.clear();
-    text.clear();
+    Code.clear();
+    Token.clear();
+    Text.clear();
     while (!S1.empty()) S1.pop();
     while (!S2.empty()) S2.pop();
+    while (!Eval.empty()) Eval.pop();
 }
 
 void mini_regex::lexer()
@@ -45,28 +43,30 @@ void mini_regex::lexer()
         switch (regexp[_index])
         {
             case '*':
-                token.push_back(TOKEN::CLOSURE);
+                Token.push_back(TOKEN::CLOSURE);
                 _index++;
                 break;
             case '|':
-                token.push_back(TOKEN::OR);
+                Token.push_back(TOKEN::OR);
                 _index++;
                 break;
             case '(':
-                token.push_back(TOKEN::LBRACKET);
+                Token.push_back(TOKEN::LBRACKET);
                 _index++;
                 break;
             case ')':
-                token.push_back(TOKEN::RBRACKET);
+                Token.push_back(TOKEN::RBRACKET);
                 _index++;
                 break;
             default:
             {
                 unsigned int start_pos = _index, end_pos = _index;
                 while (end_pos < _len && ((regexp[end_pos] >= 'a' && regexp[end_pos] <= 'z') || (regexp[end_pos] >= 'A' && regexp[end_pos] <= 'Z') || (regexp[end_pos] >= '0' && regexp[end_pos] <= '9')))
+                {
+                    Text.push_back(regexp[end_pos]);
+                    Token.push_back(TOKEN::_CHAR);
                     end_pos++;
-                text.push_back(regexp.substr(start_pos, end_pos - start_pos));
-                token.push_back(TEXT);
+                }
                 _index = end_pos;
                 break;
             }
@@ -79,18 +79,20 @@ void mini_regex::lexer()
  */
 bool mini_regex::parse()
 {
-    std::ptrdiff_t _index = 0, _len = token.size();
-    std::reverse(text.begin(), text.end());
+    std::ptrdiff_t _index = 0, _len = Token.size();
+    std::reverse(Text.begin(), Text.end());
 
     while (_index < _len)
     {
-        switch (token[_index])
+        switch (Token[_index])
         {
-            case TOKEN::TEXT: 
-                S2.push(parse_stack_t(TOKEN::TEXT,1,code.size()));
-                code.push_back(CODE_ELM(BYTE_CODE::MATCH,const_cast<char*>(text.back().data()),0));
-                text.pop_back();
+            case TOKEN::_CHAR:
+            {
+                S2.push(parse_stack_t(TOKEN::_CHAR,1,Code.size()));
+                Code.push_back(CODE_ELM(BYTE_CODE::MATCH,Text.back(),0));
+                Text.pop_back();
                 break;
+            }
 
             case TOKEN::OR:
                 /* OR 延后处理 */
@@ -108,8 +110,8 @@ bool mini_regex::parse()
                 parse_stack_t exp = S2.top();
                 S2.pop();
 
-                code.insert(code.begin() + exp.ip, CODE_ELM(BYTE_CODE::SPLIT, 1, exp.n + 1 + 1));
-                code.insert(code.begin() + exp.ip + 1 + exp.n, CODE_ELM(BYTE_CODE::SPLIT, -exp.n, 1));
+                Code.insert(Code.begin() + exp.ip, CODE_ELM(BYTE_CODE::SPLIT, 1, exp.n + 1 + 1));
+                Code.insert(Code.begin() + exp.ip + 1 + exp.n, CODE_ELM(BYTE_CODE::SPLIT, -exp.n, 1));
 
                 exp.n += 2;
                 S2.push(exp);
@@ -149,7 +151,7 @@ bool mini_regex::parse()
 
     while (!S2.empty()) S2.pop();
 
-    code.push_back(CODE_ELM(ACCEPT,0,0));
+    Code.push_back(CODE_ELM(BYTE_CODE::ACCEPT,0,0));
     return true;
 }
 /* 
@@ -167,7 +169,7 @@ bool mini_regex::parse_or()
 
     if (S2.size() < 2)
     {
-        std::cout << "parse: '|' not enough text." << std::endl;
+        std::cout << "parse: '|' not enough Text." << std::endl;
         return false;
     }
     exp2 = S2.top(); S2.pop();
@@ -176,16 +178,13 @@ bool mini_regex::parse_or()
         std::swap(exp1, exp2);
     s1_pst.ip = exp1.ip; /* update ip */
 
-    // std::cout << "exp1.ip: " << exp1.ip << " exp1.n: " << exp1.n << std::endl;
-    // std::cout << "exp2.ip: " << exp2.ip << " exp2.n: " << exp2.n << std::endl;
-
     /* insert JMP */
     exp2.ip++;
-    code.insert(code.begin() + exp1.ip + exp1.n, CODE_ELM(BYTE_CODE::JMP, exp2.n + 1, 0));
+    Code.insert(Code.begin() + exp1.ip + exp1.n, CODE_ELM(BYTE_CODE::JMP, exp2.n + 1, 0));
 
     /*  insert SPLIT (+1) */
     exp1.ip++; exp2.ip++;
-    code.insert(code.begin() + s1_pst.ip, CODE_ELM(BYTE_CODE::SPLIT, 1, exp2.ip - s1_pst.ip));
+    Code.insert(Code.begin() + s1_pst.ip, CODE_ELM(BYTE_CODE::SPLIT, 1, exp2.ip - s1_pst.ip));
 
     s1_pst.tk = TOKEN::EXP;
     s1_pst.n += (exp1.n + exp2.n);
@@ -196,6 +195,80 @@ bool mini_regex::parse_or()
 
 bool mini_regex::evalute()
 {
+    std::ptrdiff_t _code_ip = 0, _code_len = Code.size();
+    std::ptrdiff_t _target_start_pos = 0, _target_len = target.length();
+    std::ptrdiff_t _matched_index = 0, _matched_len = 0;
+    bool is_accept = false;
+
+    while (_target_start_pos < _target_len)
+    {
+        _code_ip = 0;
+        _matched_index = _target_start_pos;
+        _matched_len = 0;
+        is_accept = false;
+        while (!Eval.empty()) Eval.pop(); /* 清空分支栈 */
+
+        while (_matched_index < _target_len && !is_accept && _code_ip < _code_len)
+        {
+            switch (Code[_code_ip].op)
+            {
+                case BYTE_CODE::MATCH:
+                {
+                    if (target[_matched_index] != (char)reinterpret_cast<std::ptrdiff_t>(Code[_code_ip].exp1))
+                    {
+                        if (!Eval.empty())
+                        {
+                            _code_ip = Eval.top();
+                            Eval.pop();
+                        } else {
+                            goto fail_loop;
+                        }
+                    } else {
+                        _matched_index += 1;
+                        _matched_len += 1;
+                        _code_ip++;
+                    }
+                    
+                    break;
+                }
+
+                case BYTE_CODE::SPLIT:
+                {
+                    auto exp1 = reinterpret_cast<std::ptrdiff_t>(Code[_code_ip].exp1),
+                         exp2 = reinterpret_cast<std::ptrdiff_t>(Code[_code_ip].exp2);
+                    if (exp1 == _code_ip + exp1 && exp2 == Eval.top()) break; /* 死循环 */
+                    /* 默认选exp1分支 执行失败则进入exp2分支 */
+                    Eval.push(_code_ip + exp2);
+                    _code_ip += exp1;
+                    break;
+                }
+
+                case BYTE_CODE::JMP:
+                    _code_ip += reinterpret_cast<std::ptrdiff_t>(Code[_code_ip].exp1);
+                    break;
+
+                case BYTE_CODE::ACCEPT:
+                    _code_ip++;
+                    is_accept = true;
+                    break;
+
+                default:
+                    _code_ip++;
+                    break;
+            }
+        }
+
+        if (_matched_index >= _target_len || is_accept)
+        {
+            regex_result.begin = _target_start_pos;
+            regex_result.end = _target_start_pos + _matched_len;
+            regex_result.matched = target.substr(regex_result.begin, _matched_len);
+            return true;
+        }
+
+        fail_loop:;
+        _target_start_pos++;
+    }
     return false;
 }
 
@@ -203,22 +276,21 @@ void mini_regex::output_code()
 {
     std::cout << "Regexp: " << regexp << std::endl;
     std::cout << "Generate Code: " << std::endl;
-    for (std::vector<CODE_TYPE>::iterator i = code.begin(); i != code.end(); ++i)
+    for (auto i : Code)
     {
-        switch (i->first)
+        switch (i.op)
         {
             case BYTE_CODE::SPLIT:
-                std::cout << "  SPLIT " << reinterpret_cast<std::ptrdiff_t>(i->second.first)\
-                        << ", " << reinterpret_cast<std::ptrdiff_t>(i->second.second) << std::endl;
+                std::cout << "  SPLIT " << reinterpret_cast<std::ptrdiff_t>(i.exp1)\
+                        << ", " << reinterpret_cast<std::ptrdiff_t>(i.exp2) << std::endl;
                 break;
             case BYTE_CODE::MATCH:
             {
-                std::string s = reinterpret_cast<const char*>(i->second.first);
-                std::cout << "  MATCH " << s << std::endl;
+                std::cout << "  MATCH " << (char)reinterpret_cast<std::ptrdiff_t>(i.exp1) << std::endl;
                 break;
             }
             case BYTE_CODE::JMP:
-                std::cout << "  JMP " << reinterpret_cast<std::ptrdiff_t>(i->second.first) << std::endl;
+                std::cout << "  JMP " << reinterpret_cast<std::ptrdiff_t>(i.exp1) << std::endl;
                 break;
             case BYTE_CODE::ACCEPT:
                 std::cout << "  ACCEPT" << std::endl;
@@ -231,4 +303,5 @@ void mini_regex::output_code()
                 break;
         }
     }
+
 }
