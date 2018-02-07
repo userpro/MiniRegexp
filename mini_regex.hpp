@@ -1,16 +1,6 @@
 #ifndef _MINI_REGEX_H_
 #define _MINI_REGEX_H_
 
-/*
-Support:
-    a       Single char
-    a|b     Or
-    ab      Concat
-    a*      Closure
-    (a)     Tuple
-
-*/
-
 #include <stack>
 #include <vector>
 #include <string>
@@ -18,7 +8,6 @@ Support:
 #include <algorithm>
 #include <iostream>
 
-#define CODE_TYPE std::pair<BYTE_CODE, std::pair<std::ptrdiff_t*, std::ptrdiff_t*> >
 #define CODE_ELM(a,b,c) ByteCode(a, reinterpret_cast<void*>(b), reinterpret_cast<void*>(c))
 
 class mini_regex

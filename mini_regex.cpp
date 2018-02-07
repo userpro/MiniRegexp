@@ -74,9 +74,6 @@ void mini_regex::lexer()
     }
 }
 
-/* Priority[from low -> high]: 
- *      '(', '|', ')', '*'
- */
 bool mini_regex::parse()
 {
     std::ptrdiff_t _index = 0, _len = Token.size();
@@ -154,6 +151,7 @@ bool mini_regex::parse()
     Code.push_back(CODE_ELM(BYTE_CODE::ACCEPT,0,0));
     return true;
 }
+
 /* 
  * OR 处理:
  *      0 split 1 4 
