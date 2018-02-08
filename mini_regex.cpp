@@ -22,7 +22,6 @@ bool mini_regex::match(const std::string& match_str, std::function<void(_regex_r
     bool flag = false;
     target = match_str;
     flag = evalute();
-    std::cout << "result: ";
     if (callback) callback(regex_result);
     return flag;
 }

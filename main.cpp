@@ -4,8 +4,9 @@
 
 void func(mini_regex::_regex_result& res)
 {
+    std::cout << "Result: " << std::endl;
     for (auto i : res.matched)
-        std::cout << i << std::endl;
+        std::cout << "  " << i;
 }
 
 void test(std::string reg, std::string tar, std::function<void (mini_regex::_regex_result&)> callback)
@@ -20,7 +21,8 @@ void test(std::string reg, std::string tar, std::function<void (mini_regex::_reg
 
 int main()
 {
-    test("\\ba(a|c|b|\\d)*.", "daccaaafascda ac1cgg", func);
+    test("a(a|c|b|\\d)*.", "daccaaafascda ac1cgg", func);
+    test("\\bworld", "world world", func);
     test("d\\(o(es)?", "d(oeing", func);
     test("do(es)+", "doesng", func);
     test("a|food", "aood", func);
