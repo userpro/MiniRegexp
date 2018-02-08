@@ -51,9 +51,9 @@ private:
         LBRACKET,
         RBRACKET,
         EXP,        /* stack parse */
-        ANY = -1,        /* . */
-        DIGIT = -2,      /* \d <=> [0-9] */
-        SPACE = -3,      /* \s <=> [ \f\n\r\t\v] */
+        ANY = -1,   /* . */
+        DIGIT = -2, /* \d <=> [0-9] */
+        SPACE = -3, /* \s <=> [ \f\n\r\t\v] */
     };
 
     enum MATCH_COMMAD

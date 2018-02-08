@@ -66,9 +66,8 @@ void mini_regex::lexer()
                         Text.push_back(' ');
                         break;
 
-                    case 'd':
-                        Token.push_back(TOKEN::DIGIT);
-                        break;
+                    case 'd': Token.push_back(TOKEN::DIGIT); break;
+                    case 's': Token.push_back(TOKEN::SPACE); break;
 
                     default:
                         break;
@@ -309,6 +308,10 @@ bool mini_regex::evalute()
                                 goto __backtrack;
                             break;
 
+                        case TOKEN::SPACE:
+                            // ... write here
+                            break;
+
                         default:
                             if (target[_matched_index] == (char)exp_t)
                                 goto __match_ok;
@@ -406,7 +409,7 @@ void mini_regex::output_code()
             case BYTE_CODE::MATCH:
             {
                 int exp_t = reinterpret_cast<std::ptrdiff_t>(i.exp1);
-                // ... wait for implement
+                // ... write here
                 std::cout << "  MATCH " << (char)exp_t << std::endl;
                 break;
             }
