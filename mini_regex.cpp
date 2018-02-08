@@ -55,21 +55,27 @@ void mini_regex::lexer()
             case '|':  Token.push_back(TOKEN::OR);        _index++; break;
             case '(':  Token.push_back(TOKEN::LBRACKET);  _index++; break;
             case ')':  Token.push_back(TOKEN::RBRACKET);  _index++; break;
+            case '[':  Token.push_back(TOKEN::SQUARE_LBRACKET); _index++; break;
+            case ']':  Token.push_back(TOKEN::SQUARE_RBRACKET); _index++; break;
+            case '{':  Token.push_back(TOKEN::LBRACE);    _index++; break;
+            case '}':  Token.push_back(TOKEN::RBRACE);    _index++; break;
 
             case '\\':
             {
                 _index++; /* skip '\\' */
                 switch (regexp[_index])
                 {
-                    case 'b':
-                        Token.push_back(TOKEN::_CHAR);
-                        Text.push_back(' ');
-                        break;
+                    case 'b': Token.push_back(TOKEN::_CHAR); Text.push_back(' ');  break;
+                    case 'n': Token.push_back(TOKEN::_CHAR); Text.push_back('\n'); break;
+                    case 't': Token.push_back(TOKEN::_CHAR); Text.push_back('\t'); break;
+                    case 'r': Token.push_back(TOKEN::_CHAR); Text.push_back('\r'); break;
 
                     case 'd': Token.push_back(TOKEN::DIGIT); break;
                     case 's': Token.push_back(TOKEN::SPACE); break;
 
                     default:
+                        Token.push_back(TOKEN::_CHAR);
+                        Text.push_back(regexp[_index]);
                         break;
 
                 }
@@ -80,7 +86,7 @@ void mini_regex::lexer()
             default:
             {
                 unsigned int start_pos = _index, end_pos = _index;
-                while (end_pos < _len && ((regexp[end_pos] >= 'a' && regexp[end_pos] <= 'z') || (regexp[end_pos] >= 'A' && regexp[end_pos] <= 'Z') || (regexp[end_pos] >= '0' && regexp[end_pos] <= '9')))
+                while (end_pos < _len && ((regexp[end_pos] >= 'a' && regexp[end_pos] <= 'z') || (regexp[end_pos] >= 'A' && regexp[end_pos] <= 'Z') || (regexp[end_pos] >= '0' && regexp[end_pos] <= '9') || regexp[end_pos] == '_'))
                 {
                     Text.push_back(regexp[end_pos]);
                     Token.push_back(TOKEN::_CHAR);
@@ -110,6 +116,7 @@ bool mini_regex::parse()
                 break;
             }
 
+            /* '.' */
             case TOKEN::ANY: 
                 S2.push(parse_stack_t(TOKEN::_CHAR, 1, Code.size()));
                 Code.push_back(CODE_ELM(BYTE_CODE::MATCH, TOKEN::ANY, 0)); /* -1 means match any */
@@ -120,6 +127,7 @@ bool mini_regex::parse()
                 Code.push_back(CODE_ELM(BYTE_CODE::MATCH, TOKEN::DIGIT, 0));
                 break;
             
+            /* '+' */
             case TOKEN::PLUS:
             {
                 /*
@@ -137,6 +145,7 @@ bool mini_regex::parse()
                 break;
             }
             
+            /* '?' */
             case TOKEN::QUESTION: 
             {
                 /*
@@ -154,15 +163,38 @@ bool mini_regex::parse()
                 S2.push(exp);
                 break;
             }
-            
-            case TOKEN::BEGIN: break;
-            case TOKEN::END: break;
 
+            /* '[' */
+            case TOKEN::SQUARE_LBRACKET:
+                break;
+
+            /* ']' */
+            case TOKEN::SQUARE_RBRACKET:
+                break;
+
+            /* '{' */
+            case TOKEN::LBRACE:
+                break;
+
+            /* '}' */
+            case TOKEN::RBRACE:
+                break;
+            
+            /* '^' */
+            case TOKEN::BEGIN: 
+                break;
+            
+            /* '$' */
+            case TOKEN::END: 
+                break;
+
+            /* '|' */
             case TOKEN::OR:
                 /* OR 延后处理 */
                 S1.push(parse_stack_t(TOKEN::OR, 2, -1));
                 break;
 
+            /* '*' */
             case TOKEN::CLOSURE:
             {
                 /* 
@@ -183,11 +215,13 @@ bool mini_regex::parse()
                 break;
             }
 
+            /* '(' */
             case TOKEN::LBRACKET:
                 S1.push(parse_stack_t(TOKEN::LBRACKET, 0, -1));
                 S2.push(parse_stack_t(TOKEN::LBRACKET, 0, -1));
                 break;
 
+            /* ')' */
             case TOKEN::RBRACKET:
             {
                 while (S1.top().tk != TOKEN::LBRACKET)

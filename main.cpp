@@ -17,10 +17,10 @@ int main()
     regex.match("daccaaafascda ac1cgg",func);
     std::cout << std::endl;
 
-    regex.compile("do(es)?");
+    regex.compile("d\\(o(es)?");
     regex.output_code();
     std::cout << "result: ";
-    regex.match("doing",func);
+    regex.match("d(oing",func);
     std::cout << std::endl;
 
     regex.compile("do(es)+");

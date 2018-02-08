@@ -42,25 +42,22 @@ private:
     {
         ERR,        /* Error */
         _CHAR,      /* Char */
-        CLOSURE,    /* ab* */
-        OR,         /* a|b */
-        PLUS,       /* + */
-        QUESTION,   /* ? */
-        BEGIN,      /* ^ */
-        END,        /* $ */
-        LBRACKET,
-        RBRACKET,
+        CLOSURE,    /* * */
+        OR,         /* '|' */
+        PLUS,       /* '+' */
+        QUESTION,   /* '?' */
+        BEGIN,      /* '^' */
+        END,        /* '$' */
+        LBRACKET,   /* '(' */
+        RBRACKET,   /* ')' */
+        SQUARE_LBRACKET,   /* '[' */
+        SQUARE_RBRACKET,   /* ']' */
+        LBRACE,     /* '{' */
+        RBRACE,     /* '}' */
         EXP,        /* stack parse */
-        ANY = -1,   /* . */
+        ANY = -1,   /* '.' */
         DIGIT = -2, /* \d <=> [0-9] */
         SPACE = -3, /* \s <=> [ \f\n\r\t\v] */
-    };
-
-    enum MATCH_COMMAD
-    {
-        COM_ANY = -1,
-        COM_DIGIT = -2, /* \d */
-        COM_CHAR = -3,  /* \s */
     };
 
     struct ByteCode
