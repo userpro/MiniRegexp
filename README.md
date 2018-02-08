@@ -1,9 +1,18 @@
 # mini_regexp
 一个简单的正则表达式解释器
 
-仅支持( ) | *
-
 生成opcode再执行 opcode的地址采用相对地址 
+
+## 中间指令
+`split addr1 addr2`
+
+`match ch`
+
+`jmp addr`
+
+`accept`
+
+`halt`
 
 ## 支持
 `(` `)` `|` `*` `\b` `\d` `.` `?` `+`
