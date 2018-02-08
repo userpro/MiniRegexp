@@ -40,8 +40,8 @@ private:
 
     enum TOKEN
     {
-        ERR,        /* Error */
-        _CHAR,      /* Char */
+        ERR,        /* error */
+        STRING,     /* string */
         CLOSURE,    /* * */
         OR,         /* '|' */
         PLUS,       /* '+' */
@@ -74,7 +74,7 @@ private:
     
     std::vector<TOKEN> Token;       /* lexer */
     std::vector<ByteCode> Code;     /* codegen */
-    std::vector<char> Text;  /* TEXT (a|b)* => store a, b */
+    std::vector<std::string> Text;  /* TEXT (a|b)* => store a, b */
 
     struct parse_stack_t
     {

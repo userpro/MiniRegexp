@@ -22,6 +22,7 @@ bool mini_regex::match(const std::string& match_str, std::function<void(_regex_r
     bool flag = false;
     target = match_str;
     flag = evalute();
+    std::cout << "result: ";
     if (callback) callback(regex_result);
     return flag;
 }
@@ -65,17 +66,17 @@ void mini_regex::lexer()
                 _index++; /* skip '\\' */
                 switch (regexp[_index])
                 {
-                    case 'b': Token.push_back(TOKEN::_CHAR); Text.push_back(' ');  break;
-                    case 'n': Token.push_back(TOKEN::_CHAR); Text.push_back('\n'); break;
-                    case 't': Token.push_back(TOKEN::_CHAR); Text.push_back('\t'); break;
-                    case 'r': Token.push_back(TOKEN::_CHAR); Text.push_back('\r'); break;
+                    case 'b': Token.push_back(TOKEN::STRING); Text.push_back(" ");  break;
+                    case 'n': Token.push_back(TOKEN::STRING); Text.push_back("\n"); break;
+                    case 't': Token.push_back(TOKEN::STRING); Text.push_back("\t"); break;
+                    case 'r': Token.push_back(TOKEN::STRING); Text.push_back("\r"); break;
 
                     case 'd': Token.push_back(TOKEN::DIGIT); break;
                     case 's': Token.push_back(TOKEN::SPACE); break;
 
                     default:
-                        Token.push_back(TOKEN::_CHAR);
-                        Text.push_back(regexp[_index]);
+                        Token.push_back(TOKEN::STRING);
+                        Text.push_back(regexp.substr(_index, 1));
                         break;
 
                 }
@@ -86,12 +87,14 @@ void mini_regex::lexer()
             default:
             {
                 unsigned int start_pos = _index, end_pos = _index;
-                while (end_pos < _len && ((regexp[end_pos] >= 'a' && regexp[end_pos] <= 'z') || (regexp[end_pos] >= 'A' && regexp[end_pos] <= 'Z') || (regexp[end_pos] >= '0' && regexp[end_pos] <= '9') || regexp[end_pos] == '_'))
-                {
-                    Text.push_back(regexp[end_pos]);
-                    Token.push_back(TOKEN::_CHAR);
+                while (end_pos < _len 
+                    && ((regexp[end_pos] >= 'a' && regexp[end_pos] <= 'z') 
+                        || (regexp[end_pos] >= 'A' && regexp[end_pos] <= 'Z') 
+                        || (regexp[end_pos] >= '0' && regexp[end_pos] <= '9') 
+                        || regexp[end_pos] == '_'))
                     end_pos++;
-                }
+                Text.push_back(regexp.substr(start_pos, end_pos - start_pos));
+                Token.push_back(TOKEN::STRING);
                 _index = end_pos;
                 break;
             }
@@ -108,22 +111,22 @@ bool mini_regex::parse()
     {
         switch (Token[_index])
         {
-            case TOKEN::_CHAR:
+            case TOKEN::STRING:
             {
-                S2.push(parse_stack_t(TOKEN::_CHAR, 1, Code.size()));
-                Code.push_back(CODE_ELM(BYTE_CODE::MATCH, Text.back(), 0));
+                S2.push(parse_stack_t(TOKEN::STRING, 1, Code.size()));
+                Code.push_back(CODE_ELM(BYTE_CODE::MATCH, const_cast<char*>(Text.back().data()), 0));
                 Text.pop_back();
                 break;
             }
 
             /* '.' */
             case TOKEN::ANY: 
-                S2.push(parse_stack_t(TOKEN::_CHAR, 1, Code.size()));
+                S2.push(parse_stack_t(TOKEN::STRING, 1, Code.size()));
                 Code.push_back(CODE_ELM(BYTE_CODE::MATCH, TOKEN::ANY, 0)); /* -1 means match any */
                 break;
 
             case TOKEN::DIGIT:
-                S2.push(parse_stack_t(TOKEN::_CHAR, 1, Code.size()));
+                S2.push(parse_stack_t(TOKEN::STRING, 1, Code.size()));
                 Code.push_back(CODE_ELM(BYTE_CODE::MATCH, TOKEN::DIGIT, 0));
                 break;
             
@@ -233,17 +236,6 @@ bool mini_regex::parse()
                 if (!S1.empty()) S1.pop();
                 else std::cout << "mismatch parentheses." << std::endl;
 
-                /* (_CHAR,_CHAR,EXP,...) => EXP */
-                parse_stack_t exp;
-                while (S2.top().tk != TOKEN::LBRACKET)
-                {
-                    exp.n += S2.top().n;
-                    exp.ip = S2.top().ip;
-                    S2.pop();
-                }
-                S2.pop();
-                exp.tk = TOKEN::EXP;
-                S2.push(exp);
             }
 
             case TOKEN::EXP: break;
@@ -328,7 +320,7 @@ bool mini_regex::evalute()
             {
                 case BYTE_CODE::MATCH:
                 {
-                    int exp_t = reinterpret_cast<std::ptrdiff_t>(Code[_code_ip].exp1);
+                    auto exp_t = reinterpret_cast<std::ptrdiff_t>(Code[_code_ip].exp1);
                     switch (exp_t)
                     {
                         case TOKEN::ANY:
@@ -347,11 +339,19 @@ bool mini_regex::evalute()
                             break;
 
                         default:
-                            if (target[_matched_index] == (char)exp_t)
-                                goto __match_ok;
+                        {
+                            std::string s = reinterpret_cast<const char*>(exp_t);
+                            if (target.compare(_matched_index, s.length(), s) == 0)
+                            {
+                                _matched_index += s.length();
+                                _matched_len += s.length();
+                                _code_ip++;
+                                goto __out;
+                            }
                             else
                                 goto __backtrack;
                             break;
+                        }
                     }
 
                     goto __out; /* 防止直接执行 */
@@ -442,9 +442,22 @@ void mini_regex::output_code()
                 break;
             case BYTE_CODE::MATCH:
             {
-                int exp_t = reinterpret_cast<std::ptrdiff_t>(i.exp1);
-                // ... write here
-                std::cout << "  MATCH " << (char)exp_t << std::endl;
+                auto exp_t = reinterpret_cast<std::ptrdiff_t>(i.exp1);
+                switch (exp_t)
+                {
+                    case TOKEN::ANY:
+                        std::cout << "  MATCH " << "ANY" << std::endl;
+                        break;
+                    case TOKEN::DIGIT:
+                        std::cout << "  MATCH " << "DIGIT" << std::endl;
+                        break;
+                    case TOKEN::SPACE:
+                        std::cout << "  MATCH " << "SPACE" << std::endl;
+                        break;
+                    default:
+                        std::cout << "  MATCH " << (std::string)reinterpret_cast<const char*>(exp_t) << std::endl;
+                }
+                
                 break;
             }
             case BYTE_CODE::JMP:
@@ -461,7 +474,7 @@ void mini_regex::output_code()
                 break;
         }
     }
-    std::cout << std::endl << std::endl;
+    std::cout << std::endl;
 
 }
 
