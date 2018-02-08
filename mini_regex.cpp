@@ -1,3 +1,6 @@
+#ifndef _MINI_REGEX_CPP
+#define _MINI_REGEX_CPP
+
 #include "mini_regex.hpp"
 
 mini_regex::mini_regex()
@@ -27,6 +30,7 @@ void mini_regex::_reset()
 {
     regexp = "";
     target = "";
+    regex_result.matched.clear();
     Code.clear();
     Token.clear();
     Text.clear();
@@ -42,22 +46,38 @@ void mini_regex::lexer()
     {
         switch (regexp[_index])
         {
-            case '*':
-                Token.push_back(TOKEN::CLOSURE);
+            case '.':  Token.push_back(TOKEN::ANY);       _index++; break;
+            case '+':  Token.push_back(TOKEN::PLUS);      _index++; break;
+            case '?':  Token.push_back(TOKEN::QUESTION);  _index++; break;
+            case '^':  Token.push_back(TOKEN::BEGIN);     _index++; break;
+            case '$':  Token.push_back(TOKEN::END);       _index++; break;
+            case '*':  Token.push_back(TOKEN::CLOSURE);   _index++; break;
+            case '|':  Token.push_back(TOKEN::OR);        _index++; break;
+            case '(':  Token.push_back(TOKEN::LBRACKET);  _index++; break;
+            case ')':  Token.push_back(TOKEN::RBRACKET);  _index++; break;
+
+            case '\\':
+            {
+                _index++; /* skip '\\' */
+                switch (regexp[_index])
+                {
+                    case 'b':
+                        Token.push_back(TOKEN::_CHAR);
+                        Text.push_back(' ');
+                        break;
+
+                    case 'd':
+                        Token.push_back(TOKEN::DIGIT);
+                        break;
+
+                    default:
+                        break;
+
+                }
                 _index++;
                 break;
-            case '|':
-                Token.push_back(TOKEN::OR);
-                _index++;
-                break;
-            case '(':
-                Token.push_back(TOKEN::LBRACKET);
-                _index++;
-                break;
-            case ')':
-                Token.push_back(TOKEN::RBRACKET);
-                _index++;
-                break;
+            }
+
             default:
             {
                 unsigned int start_pos = _index, end_pos = _index;
@@ -85,15 +105,63 @@ bool mini_regex::parse()
         {
             case TOKEN::_CHAR:
             {
-                S2.push(parse_stack_t(TOKEN::_CHAR,1,Code.size()));
-                Code.push_back(CODE_ELM(BYTE_CODE::MATCH,Text.back(),0));
+                S2.push(parse_stack_t(TOKEN::_CHAR, 1, Code.size()));
+                Code.push_back(CODE_ELM(BYTE_CODE::MATCH, Text.back(), 0));
                 Text.pop_back();
                 break;
             }
 
+            case TOKEN::ANY: 
+                S2.push(parse_stack_t(TOKEN::_CHAR, 1, Code.size()));
+                Code.push_back(CODE_ELM(BYTE_CODE::MATCH, TOKEN::ANY, 0)); /* -1 means match any */
+                break;
+
+            case TOKEN::DIGIT:
+                S2.push(parse_stack_t(TOKEN::_CHAR, 1, Code.size()));
+                Code.push_back(CODE_ELM(BYTE_CODE::MATCH, TOKEN::DIGIT, 0));
+                break;
+            
+            case TOKEN::PLUS:
+            {
+                /*
+                 * 0 exp
+                 * 1 split -1,1
+                 */
+                parse_stack_t exp = S2.top();
+                S2.pop();
+
+                Code.insert(Code.begin() + exp.ip + exp.n, CODE_ELM(BYTE_CODE::SPLIT, -exp.n, 1));
+
+                exp.n += 1;
+                exp.tk = TOKEN::EXP;
+                S2.push(exp);
+                break;
+            }
+            
+            case TOKEN::QUESTION: 
+            {
+                /*
+                 * 0 split 1,2
+                 * 1 exp
+                 * 2 ...
+                 */
+                parse_stack_t exp = S2.top();
+                S2.pop();
+
+                Code.insert(Code.begin() + exp.ip, CODE_ELM(BYTE_CODE::SPLIT, 1, exp.n + 1));
+
+                exp.n += 1;
+                exp.tk = TOKEN::EXP;
+                S2.push(exp);
+                break;
+            }
+            
+            case TOKEN::BEGIN: break;
+            case TOKEN::END: break;
+
             case TOKEN::OR:
                 /* OR 延后处理 */
-                S1.push(parse_stack_t(TOKEN::OR,2,-1));
+                S1.push(parse_stack_t(TOKEN::OR, 2, -1));
                 break;
 
             case TOKEN::CLOSURE:
@@ -111,12 +179,14 @@ bool mini_regex::parse()
                 Code.insert(Code.begin() + exp.ip + 1 + exp.n, CODE_ELM(BYTE_CODE::SPLIT, -exp.n, 1));
 
                 exp.n += 2;
+                exp.tk = TOKEN::EXP;
                 S2.push(exp);
                 break;
             }
 
             case TOKEN::LBRACKET:
-                S1.push(parse_stack_t(TOKEN::LBRACKET,0,-1));
+                S1.push(parse_stack_t(TOKEN::LBRACKET, 0, -1));
+                S2.push(parse_stack_t(TOKEN::LBRACKET, 0, -1));
                 break;
 
             case TOKEN::RBRACKET:
@@ -127,7 +197,20 @@ bool mini_regex::parse()
                         parse_or(); /* OR处理 */
                     S1.pop();
                 }
-                S1.pop();
+                if (!S1.empty()) S1.pop();
+                else std::cout << "mismatch parentheses." << std::endl;
+
+                /* (_CHAR,_CHAR,EXP,...) => EXP */
+                parse_stack_t exp;
+                while (S2.top().tk != TOKEN::LBRACKET)
+                {
+                    exp.n += S2.top().n;
+                    exp.ip = S2.top().ip;
+                    S2.pop();
+                }
+                S2.pop();
+                exp.tk = TOKEN::EXP;
+                S2.push(exp);
             }
 
             case TOKEN::EXP: break;
@@ -148,7 +231,7 @@ bool mini_regex::parse()
 
     while (!S2.empty()) S2.pop();
 
-    Code.push_back(CODE_ELM(BYTE_CODE::ACCEPT,0,0));
+    Code.push_back(CODE_ELM(BYTE_CODE::ACCEPT, 0, 0));
     return true;
 }
 
@@ -212,21 +295,46 @@ bool mini_regex::evalute()
             {
                 case BYTE_CODE::MATCH:
                 {
-                    if (target[_matched_index] != (char)reinterpret_cast<std::ptrdiff_t>(Code[_code_ip].exp1))
+                    int exp_t = reinterpret_cast<std::ptrdiff_t>(Code[_code_ip].exp1);
+                    switch (exp_t)
                     {
-                        if (!Eval.empty())
-                        {
-                            _code_ip = Eval.top();
-                            Eval.pop();
-                        } else {
-                            goto fail_loop;
-                        }
-                    } else {
-                        _matched_index += 1;
-                        _matched_len += 1;
-                        _code_ip++;
+                        case TOKEN::ANY:
+                            goto __match_ok;
+                            break;
+
+                        case TOKEN::DIGIT:
+                            if (target[_matched_index] >= '0' && target[_matched_index] <= '9')
+                                goto __match_ok;
+                            else
+                                goto __backtrack;
+                            break;
+
+                        default:
+                            if (target[_matched_index] == (char)exp_t)
+                                goto __match_ok;
+                            else
+                                goto __backtrack;
+                            break;
                     }
-                    
+
+                    goto __out; /* 防止直接执行 */
+
+                    __backtrack:; /* backtrack */
+                    if (!Eval.empty())
+                    {
+                        _code_ip = Eval.top();
+                        Eval.pop();
+                    } else {
+                        goto __fail_loop;
+                    }
+                    goto __out; /* 防止直接执行 */
+
+                    __match_ok:; /* match ok */
+                    _matched_index += 1;
+                    _matched_len += 1;
+                    _code_ip++;
+
+                    __out:;
                     break;
                 }
 
@@ -234,7 +342,11 @@ bool mini_regex::evalute()
                 {
                     auto exp1 = reinterpret_cast<std::ptrdiff_t>(Code[_code_ip].exp1),
                          exp2 = reinterpret_cast<std::ptrdiff_t>(Code[_code_ip].exp2);
-                    if (exp1 == _code_ip + exp1 && exp2 == Eval.top()) break; /* 死循环 */
+                    if (exp1 == _code_ip + exp1 && !Eval.empty() && exp2 == Eval.top()) /* 死循环 */
+                    {
+                        std::cout << " infinite loop." << std::endl;
+                        goto __fail_loop;
+                    }
                     /* 默认选exp1分支 执行失败则进入exp2分支 */
                     Eval.push(_code_ip + exp2);
                     _code_ip += exp1;
@@ -250,6 +362,10 @@ bool mini_regex::evalute()
                     is_accept = true;
                     break;
 
+                case BYTE_CODE::HALT:
+                    goto __fail_loop;
+                    break;
+
                 default:
                     _code_ip++;
                     break;
@@ -258,14 +374,19 @@ bool mini_regex::evalute()
 
         if (_matched_index >= _target_len || is_accept)
         {
-            regex_result.begin = _target_start_pos;
-            regex_result.end = _target_start_pos + _matched_len;
-            regex_result.matched = target.substr(regex_result.begin, _matched_len);
-            return true;
+            /* match success */
+            if (_matched_len > 0)
+                regex_result.matched.push_back(target.substr(_target_start_pos, _matched_len));
+            else
+                _matched_len = 1;
+            _target_start_pos += _matched_len;
         }
-
-        fail_loop:;
-        _target_start_pos++;
+        else
+        {
+            /* match error */
+            __fail_loop:;
+            _target_start_pos++;
+        }
     }
     return false;
 }
@@ -284,7 +405,9 @@ void mini_regex::output_code()
                 break;
             case BYTE_CODE::MATCH:
             {
-                std::cout << "  MATCH " << (char)reinterpret_cast<std::ptrdiff_t>(i.exp1) << std::endl;
+                int exp_t = reinterpret_cast<std::ptrdiff_t>(i.exp1);
+                // ... wait for implement
+                std::cout << "  MATCH " << (char)exp_t << std::endl;
                 break;
             }
             case BYTE_CODE::JMP:
@@ -301,5 +424,9 @@ void mini_regex::output_code()
                 break;
         }
     }
+    std::cout << std::endl << std::endl;
 
 }
+
+
+#endif

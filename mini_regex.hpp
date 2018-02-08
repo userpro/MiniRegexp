@@ -1,6 +1,10 @@
 #ifndef _MINI_REGEX_H_
 #define _MINI_REGEX_H_
 
+/*
+add . ^ $ ? + 
+*/
+
 #include <stack>
 #include <vector>
 #include <string>
@@ -14,8 +18,7 @@ class mini_regex
 {
 public:
     struct _regex_result {
-        size_t begin, end;
-        std::string matched;
+        std::vector<std::string> matched;
     } regex_result;
     
     mini_regex();
@@ -41,9 +44,23 @@ private:
         _CHAR,      /* Char */
         CLOSURE,    /* ab* */
         OR,         /* a|b */
+        PLUS,       /* + */
+        QUESTION,   /* ? */
+        BEGIN,      /* ^ */
+        END,        /* $ */
         LBRACKET,
         RBRACKET,
         EXP,        /* stack parse */
+        ANY = -1,        /* . */
+        DIGIT = -2,      /* \d <=> [0-9] */
+        SPACE = -3,      /* \s <=> [ \f\n\r\t\v] */
+    };
+
+    enum MATCH_COMMAD
+    {
+        COM_ANY = -1,
+        COM_DIGIT = -2, /* \d */
+        COM_CHAR = -3,  /* \s */
     };
 
     struct ByteCode
@@ -70,8 +87,10 @@ private:
         parse_stack_t():tk(TOKEN::ERR),n(0),ip(-1) {}
         parse_stack_t(TOKEN _tk, std::ptrdiff_t _n, std::ptrdiff_t _ip):tk(_tk),n(_n),ip(_ip) {}
     };
-    /* S1 => op 
-     * S2 => (TEXT or EXP) 
+    /* 
+     * S1 => 操作栈
+     * S2 => MATCH栈 
+     * '(', ')' 两个栈都进入
      */
     std::stack<parse_stack_t> S1, S2;        /* parser */
 
