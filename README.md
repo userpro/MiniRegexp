@@ -22,3 +22,4 @@ add support
 - 增加全局最长匹配
 - 增加 ^ $
 - 合并match
+- 改善output输出
