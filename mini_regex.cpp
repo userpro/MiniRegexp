@@ -4,9 +4,10 @@
 #include "mini_regex.hpp"
 
 mini_regex::mini_regex()
-    :regexp(""),Code(),Token(),Text(),S1(),S2(),Eval()
-{
-}
+    :regexp(""),target(""),Multiline(true),
+    Code(),Token(),Text(),
+    S1(),S2(),Eval()
+{}
 
 bool mini_regex::compile(const std::string& regexp_str)
 {
@@ -17,7 +18,7 @@ bool mini_regex::compile(const std::string& regexp_str)
 }
 
 
-bool mini_regex::match(const std::string& match_str, std::function<void(_regex_result&)> callback)
+bool mini_regex::match(const std::string& match_str, std::function<void(Result&)> callback)
 {
     bool flag = false;
     target = match_str;
@@ -57,6 +58,7 @@ void mini_regex::lexer()
             case ')':  Token.push_back(TOKEN::RBRACKET);  _index++; break;
             case '[':  Token.push_back(TOKEN::SQUARE_LBRACKET); _index++; break;
             case ']':  Token.push_back(TOKEN::SQUARE_RBRACKET); _index++; break;
+            case ',':  Token.push_back(TOKEN::COMMA);     _index++; break;
             case '{':  Token.push_back(TOKEN::LBRACE);    _index++; break;
             case '}':  Token.push_back(TOKEN::RBRACE);    _index++; break;
 
@@ -69,6 +71,8 @@ void mini_regex::lexer()
                     case 'n': Token.push_back(TOKEN::STRING); Text.push_back("\n"); break;
                     case 't': Token.push_back(TOKEN::STRING); Text.push_back("\t"); break;
                     case 'r': Token.push_back(TOKEN::STRING); Text.push_back("\r"); break;
+                    case 'f': Token.push_back(TOKEN::STRING); Text.push_back("\f"); break;
+                    case 'v': Token.push_back(TOKEN::STRING); Text.push_back("\v"); break;
 
                     case 'd': Token.push_back(TOKEN::DIGIT); break;
                     case 's': Token.push_back(TOKEN::SPACE); break;
@@ -132,6 +136,12 @@ bool mini_regex::parse()
             /* '+' */
             case TOKEN::PLUS:
             {
+                /* 后一位是'?' 开启非贪婪模式 */
+                if (_index + 1 < _len && Token[_index + 1] == TOKEN::QUESTION) 
+                {
+                    _index++;
+                    break;
+                }
                 /*
                  * 0 exp
                  * 1 split -1,1
@@ -199,10 +209,12 @@ bool mini_regex::parse()
             /* '*' */
             case TOKEN::CLOSURE:
             {
+                /* 后面是'?' 开启非贪婪模式 */
+                if (_index + 1 < _len && Token[_index + 1] == TOKEN::QUESTION) break;
                 /* 
                  * 0 split 1 3 
                  * 1 exp(pst)
-                 * 2 split 1 3
+                 * 2 split -1 3
                  * 3 do...
                  */
                 parse_stack_t exp = S2.top();
@@ -323,18 +335,23 @@ bool mini_regex::evalute()
                     switch (exp_t)
                     {
                         case TOKEN::ANY:
-                            goto __match_ok;
+                            if (target[_matched_index] != '\n')
+                                goto __match_ok;
+                            goto __fail_loop;
                             break;
 
                         case TOKEN::DIGIT:
                             if (target[_matched_index] >= '0' && target[_matched_index] <= '9')
                                 goto __match_ok;
-                            else
-                                goto __backtrack;
+                            goto __backtrack;
                             break;
 
                         case TOKEN::SPACE:
-                            // ... write here
+                            if (target[_matched_index] != '\f' 
+                                && target[_matched_index] != '\n' 
+                                && target[_matched_index] != '\r' 
+                                && target[_matched_index] != '\t' 
+                                && target[_matched_index] != '\v')
                             break;
 
                         default:
@@ -347,8 +364,7 @@ bool mini_regex::evalute()
                                 _code_ip++;
                                 goto __out;
                             }
-                            else
-                                goto __backtrack;
+                            goto __backtrack;
                             break;
                         }
                     }

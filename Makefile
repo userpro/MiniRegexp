@@ -1,12 +1,19 @@
 CC = g++
 CC_FLAGS = -std=c++11
-SOURCES = main.cpp mini_regex.cpp
-OUTPUT = mini_regexp
+SOURCES_RUN = main.cpp mini_regex.cpp
+OUTPUT_RUN = mini_regexp
+SOURCES_EXAMPLE = example.cpp mini_regex.cpp
+OUTPUT_EXAMPLE = regex_example
 
 run:
-	$(CC) $(CC_FLAGS) $(SOURCES) -o $(OUTPUT)
-	./$(OUTPUT)
+	$(CC) $(CC_FLAGS) $(SOURCES_RUN) -o $(OUTPUT_RUN)
+	./$(OUTPUT_RUN)
+
+example:
+	$(CC) $(CC_FLAGS) $(SOURCES_EXAMPLE) -o $(OUTPUT_EXAMPLE)
+	./$(OUTPUT_EXAMPLE)
 
 .PHONY: clean
 clean:
-	rm $(OUTPUT)
+	rm $(OUTPUT_RUN)
+	rm $(OUTPUT_EXAMPLE)

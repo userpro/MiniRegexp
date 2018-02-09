@@ -13,15 +13,16 @@
 class mini_regex
 {
 public:
-    struct _regex_result {
+    struct Result {
         std::vector<std::string> matched;
     } regex_result;
+
+    bool Multiline; /* for ^ and $ */
     
     mini_regex();
-
     bool compile(const std::string& regexp_str);
-    bool match(const std::string& match_str, std::function<void(_regex_result&)> callback = nullptr);
-    
+    bool match(const std::string& match_str, std::function<void(Result&)> callback = nullptr);
+
     void output_code();
 
 private:
@@ -38,6 +39,7 @@ private:
     {
         ERR,        /* error */
         STRING,     /* string */
+        COMMA,      /* , */
         CLOSURE,    /* * */
         OR,         /* '|' */
         PLUS,       /* '+' */

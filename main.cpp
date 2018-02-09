@@ -1,7 +1,7 @@
 #include <iostream>
 #include "mini_regex.hpp"
 
-void func(mini_regex::_regex_result& res)
+void func(mini_regex::Result& res)
 {
     std::cout << "Result: " << std::endl;
     for (auto i : res.matched)
@@ -9,7 +9,7 @@ void func(mini_regex::_regex_result& res)
     std::cout << std::endl;
 }
 
-void test(std::string reg, std::string tar, std::function<void (mini_regex::_regex_result&)> callback)
+void test(std::string reg, std::string tar, std::function<void (mini_regex::Result&)> callback)
 {
     static mini_regex regex;
     regex.compile(reg);
@@ -21,11 +21,11 @@ void test(std::string reg, std::string tar, std::function<void (mini_regex::_reg
 
 int main()
 {
-    test("a(a|c|b|\\d)*.", "daccaaafascda ac1cgg", func);
+    test("a(o0|c|b|\\d)*.", "daccaaafao0da ac1cgg", func);
     test("\\bworld", "world world", func);
-    test("d\\(o(es)?", "d(oeing", func);
     test("do(es)+", "doesng", func);
-    test("a|food", "aood", func);
-    test( "(a|b)*abb", "abbb", func);
+    test("(a|b)*abb", "abbb", func);
+    test("o+?", "oooo", func);
+    test("a(o*?)d", "aoood", func);
     return 0;
 }
