@@ -1,7 +1,7 @@
 #include <iostream>
-#include "mini_regex.hpp"
+#include "mini_regexp.hpp"
 
-void func(mini_regex::Result& res)
+void func(mini_regexp::Result& res)
 {
     for (auto i : res.matched)
         std::cout << i << std::endl;
@@ -9,7 +9,7 @@ void func(mini_regex::Result& res)
 
 int main()
 {
-    mini_regex regex;
+    mini_regexp regex;
     regex.compile("a|food");
     regex.match("food", func);
     return 0;

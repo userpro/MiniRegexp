@@ -1,7 +1,7 @@
 #include <iostream>
-#include "mini_regex.hpp"
+#include "mini_regexp.hpp"
 
-void func(mini_regex::Result& res)
+void func(mini_regexp::Result& res)
 {
     std::cout << "Result: " << std::endl;
     for (auto i : res.matched)
@@ -9,9 +9,9 @@ void func(mini_regex::Result& res)
     std::cout << std::endl;
 }
 
-void test(std::string reg, std::string tar, std::function<void (mini_regex::Result&)> callback)
+void test(std::string reg, std::string tar, std::function<void (mini_regexp::Result&)> callback)
 {
-    static mini_regex regex;
+    static mini_regexp regex;
     regex.compile(reg);
     regex.output_code();
     std::cout << "Target: " << tar << std::endl;

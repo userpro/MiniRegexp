@@ -1,15 +1,15 @@
-#ifndef _MINI_REGEX_CPP
-#define _MINI_REGEX_CPP
+#ifndef _MINI_REGEXP_CPP
+#define _MINI_REGEXP_CPP
 
-#include "mini_regex.hpp"
+#include "mini_regexp.hpp"
 
-mini_regex::mini_regex()
+mini_regexp::mini_regexp()
     :regexp(""),target(""),Multiline(true),
     Code(),Token(),Text(),
     S1(),S2(),Eval()
 {}
 
-bool mini_regex::compile(const std::string& regexp_str)
+bool mini_regexp::compile(const std::string& regexp_str)
 {
     _reset();
     regexp = regexp_str;
@@ -18,7 +18,7 @@ bool mini_regex::compile(const std::string& regexp_str)
 }
 
 
-bool mini_regex::match(const std::string& match_str, std::function<void(Result&)> callback)
+bool mini_regexp::match(const std::string& match_str, std::function<void(Result&)> callback)
 {
     bool flag = false;
     target = match_str;
@@ -27,7 +27,7 @@ bool mini_regex::match(const std::string& match_str, std::function<void(Result&)
     return flag;
 }
 
-void mini_regex::_reset()
+void mini_regexp::_reset()
 {
     regexp = "";
     target = "";
@@ -40,7 +40,7 @@ void mini_regex::_reset()
     while (!Eval.empty()) Eval.pop();
 }
 
-void mini_regex::lexer()
+void mini_regexp::lexer()
 {
     std::ptrdiff_t _index = 0, _len = regexp.length();
     while (_index < _len)
@@ -105,7 +105,7 @@ void mini_regex::lexer()
     }
 }
 
-bool mini_regex::parse()
+bool mini_regexp::parse()
 {
     std::ptrdiff_t _index = 0, _len = Token.size();
     std::reverse(Text.begin(), Text.end());
@@ -279,7 +279,7 @@ bool mini_regex::parse()
  *      3 exp2
  *      4 do...
  */
-bool mini_regex::parse_or()
+bool mini_regexp::parse_or()
 {
     parse_stack_t s1_pst, exp1, exp2;
     s1_pst = S1.top();
@@ -310,7 +310,7 @@ bool mini_regex::parse_or()
     return true;
 }
 
-bool mini_regex::evalute()
+bool mini_regexp::evalute()
 {
     std::ptrdiff_t _code_ip = 0, _code_len = Code.size();
     std::ptrdiff_t _target_start_pos = 0, _target_len = target.length();
@@ -443,7 +443,7 @@ bool mini_regex::evalute()
     return false;
 }
 
-void mini_regex::output_code()
+void mini_regexp::output_code()
 {
     std::cout << "Regexp: " << regexp << std::endl;
     std::cout << "Generate Code: " << std::endl;

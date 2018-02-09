@@ -1,16 +1,15 @@
-#ifndef _MINI_REGEX_H_
-#define _MINI_REGEX_H_
+#ifndef _MINI_REGEXP_H_
+#define _MINI_REGEXP_H_
 
 #include <stack>
 #include <vector>
 #include <string>
-// #include <functional>
 #include <algorithm>
 #include <iostream>
 
 #define CODE_ELM(a,b,c) ByteCode(a, reinterpret_cast<void*>(b), reinterpret_cast<void*>(c))
 
-class mini_regex
+class mini_regexp
 {
 public:
     struct Result {
@@ -19,7 +18,7 @@ public:
 
     bool Multiline; /* for ^ and $ */
     
-    mini_regex();
+    mini_regexp();
     bool compile(const std::string& regexp_str);
     bool match(const std::string& match_str, std::function<void(Result&)> callback = nullptr);
 
