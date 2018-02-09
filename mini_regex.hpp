@@ -1,14 +1,10 @@
 #ifndef _MINI_REGEX_H_
 #define _MINI_REGEX_H_
 
-/*
-add . ^ $ ? + 
-*/
-
 #include <stack>
 #include <vector>
 #include <string>
-#include <functional>
+// #include <functional>
 #include <algorithm>
 #include <iostream>
 
