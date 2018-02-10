@@ -27,5 +27,7 @@ int main()
     test("(a|b)*abb", "abbb", func);
     test("o+?", "oooo", func);
     test("a(o*?)d", "aoood", func);
+    test("^abc", "abcabc", func);
+    test("abc$", "abc\nabc", func);
     return 0;
 }

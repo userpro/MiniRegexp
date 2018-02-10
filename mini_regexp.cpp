@@ -1,5 +1,5 @@
-#ifndef _MINI_REGEXP_CPP
-#define _MINI_REGEXP_CPP
+#ifndef _MINI_REGEXP_CPP_
+#define _MINI_REGEXP_CPP_
 
 #include "mini_regexp.hpp"
 
@@ -11,8 +11,8 @@ bool mini_regexp::compile(const std::string& regexp_str)
 {
     _reset();
     regexp = regexp_str;
-    mini_lexer.lexer(regexp_str);
-    mini_parser.parser(mini_lexer);
+    mini_lexer.lexer(regexp_str, mini_config);
+    mini_parser.parser(mini_lexer, mini_config);
     return false;
 }
 
@@ -21,7 +21,7 @@ bool mini_regexp::match(const std::string& match_str, std::function<void(Result&
 {
     bool flag = false;
     target = match_str;
-    mini_vm.vm(match_str, mini_parser.Code, regex_result.matched);
+    mini_vm.vm(match_str, mini_parser.Code, regex_result.matched, mini_config);
     if (callback) callback(regex_result);
     return flag;
 }

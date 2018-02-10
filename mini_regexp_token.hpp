@@ -12,8 +12,6 @@ namespace mini_regexp_token
         OR,         /* '|' */
         PLUS,       /* '+' */
         QUESTION,   /* '?' */
-        BEGIN,      /* '^' */
-        END,        /* '$' */
         LBRACKET,   /* '(' */
         RBRACKET,   /* ')' */
         SQUARE_LBRACKET,   /* '[' */
@@ -24,6 +22,8 @@ namespace mini_regexp_token
         ANY = -1,   /* '.' */
         DIGIT = -2, /* \d <=> [0-9] */
         SPACE = -3, /* \s <=> [ \f\n\r\t\v] */
+        BEGIN = -4,      /* '^' */
+        END = -5,        /* '$' */
     };
 }
 

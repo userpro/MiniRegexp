@@ -1,8 +1,9 @@
 CC = g++
 CC_FLAGS = -std=c++11
-SOURCES_RUN = main.cpp mini_regexp.cpp
+LIB_SOURCES = mini_regexp.cpp mini_regexp_parser.cpp mini_regexp_lexer.cpp mini_regexp_vm.cpp
+SOURCES_RUN = main.cpp $(LIB_SOURCES)
 OUTPUT_RUN = mini_regexp
-SOURCES_EXAMPLE = example.cpp mini_regexp.cpp
+SOURCES_EXAMPLE = example.cpp $(LIB_SOURCES)
 OUTPUT_EXAMPLE = regex_example
 
 run:
