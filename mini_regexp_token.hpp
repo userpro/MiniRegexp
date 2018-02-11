@@ -24,6 +24,8 @@ namespace mini_regexp_token
         SPACE = -3, /* \s <=> [ \f\n\r\t\v] */
         BEGIN = -4,      /* '^' */
         END = -5,        /* '$' */
+        INF = -6,
+        NONE = -7
     };
 }
 

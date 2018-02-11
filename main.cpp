@@ -29,5 +29,6 @@ int main()
     test("a(o*?)d", "aoood", func);
     test("^abc", "abcabc", func);
     test("abc$", "abc\nabc", func);
+    test("ab{1,3}", "abcbabababab", func);
     return 0;
 }

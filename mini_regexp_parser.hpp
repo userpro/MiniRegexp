@@ -32,7 +32,7 @@ namespace mini_regexp_parser
         };
         /* 
          * Op => 操作栈
-         * Val => MATCH栈 
+         * Val => MATCH栈(exp)
          * '(', ')' 两个栈都进入
          */
         std::stack<parse_stack_t> Op, Val;

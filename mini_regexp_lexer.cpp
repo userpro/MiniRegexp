@@ -15,6 +15,7 @@ void RE_Lexer::lexer(const std::string& regexp, RE_Config& config)
     {
         switch (regexp[_index])
         {
+            case ' ':  break;
             case '.':  Token.push_back(TOKEN::ANY);       _index++; break;
             case '+':  Token.push_back(TOKEN::PLUS);      _index++; break;
             case '?':  Token.push_back(TOKEN::QUESTION);  _index++; break;

@@ -89,17 +89,85 @@ bool RE_Parser::parser(RE_Lexer& _lexer, RE_Config& config)
             case TOKEN::SQUARE_RBRACKET:
                 break;
 
-            /* '{' */
+            /* '{' parse to '}' */
+            /*  */
             case TOKEN::LBRACE:
+            {
+                /*
+                 * 0 repeat n=1,m=2
+                 * 1 exp1
+                 * 2 repend
+                 * 3 (split 1,4)(if m = TOKEN::INF)
+                 */
+                int n,m;
+                /* get 'n' */
+                if (_lexer.Token[_index + 1] == TOKEN::STRING)
+                {
+                    n = std::stoi(_lexer.Text.back());
+                    _lexer.Text.pop_back();
+                    _index++;
+                }
+                else
+                {
+                    std::cout << "parser {} err" << std::endl;
+                    break;
+                }
+
+                /* after 'n'(Token[_index] is 'n') */
+                if (_lexer.Token[_index + 1] == TOKEN::COMMA)
+                {
+                    /* '{' 'n,' 'm' '}' */
+                    if (_lexer.Token[_index + 2] == TOKEN::STRING)
+                    {
+                        m = std::stoi(_lexer.Text.back());
+                        _lexer.Text.pop_back();
+                        _index += 2;
+                    }
+                    /* '{' 'n' ',' '}' */
+                    else if (_lexer.Token[_index + 1] == TOKEN::RBRACE) 
+                    {
+                        m = TOKEN::INF;
+                        _index++;
+                    }
+                    /* err */
+                    else std::cout << "mismatch brace!" << std::endl;
+                }
+                /* '{' 'n' '}' */
+                else if (_lexer.Token[_index + 1] == TOKEN::RBRACE) 
+                {
+                    m = TOKEN::NONE;
+                    _index++;
+                }
+                /* err */
+                else std::cout << "mismatch brace!" << std::endl;
+
+                /* '?'启用非贪婪模式 */
+                if (_index + 1 < _lexer.Token.size() && _lexer.Token[_index + 1] == TOKEN::QUESTION)
+                    m = TOKEN::NONE;
+
+                parse_stack_t exp = Val.top();
+                Val.pop();
+                Code.insert(Code.begin() + exp.ip + exp.n, CODE_ELM(BYTE_CODE::REPEND, 0, 0));
+                Code.insert(Code.begin() + exp.ip, CODE_ELM(BYTE_CODE::REPEAT, n, m));
+
+                /* like {1, } */
+                if (m == TOKEN::INF)
+                {
+                    Code.insert(Code.begin() + exp.ip + exp.n + 1, CODE_ELM(BYTE_CODE::SPLIT, -(exp.n + 1), 1));
+                    exp.n += 1;
+                }
+
+                exp.n += 2;
+                exp.tk = TOKEN::EXP;
+                Val.push(exp);
                 break;
+            }
 
             /* '}' */
-            case TOKEN::RBRACE:
-                break;
+            case TOKEN::RBRACE: break;
             
             /* '^' */
             case TOKEN::BEGIN: _begin = true; break;
-            
             /* '$' */
             case TOKEN::END: _end = true; break;
 
@@ -195,21 +263,11 @@ void RE_Parser::output_code()
                 auto exp_t = reinterpret_cast<std::ptrdiff_t>(i.exp1);
                 switch (exp_t)
                 {
-                    case TOKEN::ANY:
-                        std::cout << "  MATCH " << "ANY" << std::endl;
-                        break;
-                    case TOKEN::DIGIT:
-                        std::cout << "  MATCH " << "DIGIT" << std::endl;
-                        break;
-                    case TOKEN::SPACE:
-                        std::cout << "  MATCH " << "SPACE" << std::endl;
-                        break;
-                    case TOKEN::BEGIN:
-                        std::cout << "  MATCH " << "^" << std::endl;
-                        break;
-                    case TOKEN::END:
-                        std::cout << "  MATCH " << "$" << std::endl;
-                        break;
+                    case TOKEN::ANY:   std::cout << "  MATCH " << "ANY" << std::endl;   break;
+                    case TOKEN::DIGIT: std::cout << "  MATCH " << "DIGIT" << std::endl; break;
+                    case TOKEN::SPACE: std::cout << "  MATCH " << "SPACE" << std::endl; break;
+                    case TOKEN::BEGIN: std::cout << "  MATCH " << "^" << std::endl;     break;
+                    case TOKEN::END:   std::cout << "  MATCH " << "$" << std::endl;     break;
                     default:
                         std::cout << "  MATCH " << (std::string)reinterpret_cast<const char*>(exp_t) << std::endl;
                 }
@@ -217,13 +275,13 @@ void RE_Parser::output_code()
                 break;
             }
             case BYTE_CODE::JMP:
-                std::cout << "  JMP " << reinterpret_cast<std::ptrdiff_t>(i.exp1) << std::endl;
+                std::cout << "  JMP " << reinterpret_cast<std::ptrdiff_t>(i.exp1) << std::endl; 
                 break;
-            case BYTE_CODE::ACCEPT:
-                std::cout << "  ACCEPT" << std::endl;
-                break;
-            case BYTE_CODE::HALT:
-                std::cout << "  HALT" << std::endl;
+            case BYTE_CODE::ACCEPT: std::cout << "  ACCEPT" << std::endl; break;
+            case BYTE_CODE::HALT:   std::cout << "  HALT" << std::endl;   break;
+            case BYTE_CODE::REPEND: std::cout << "  REPEND" << std::endl;  break;
+            case BYTE_CODE::REPEAT: 
+                std::cout << "  REPEAT " << reinterpret_cast<std::ptrdiff_t>(i.exp1) << ", " << reinterpret_cast<std::ptrdiff_t>(i.exp2) << std::endl;
                 break;
             default:
                 std::cout << "  unknown unknown unknown" << std::endl;

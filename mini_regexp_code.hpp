@@ -9,6 +9,8 @@ namespace mini_regexp_code
         MATCH,  /* match addr */
         SPLIT,  /* split addr1, addr2  if (addr1) else (addr2)   */
         JMP,    /* jmp addr */
+        REPEAT, /* repeat n, m (m>=s>=n) */
+        REPEND, /* repend */
         ACCEPT,
     };
 

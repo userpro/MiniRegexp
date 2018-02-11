@@ -9,8 +9,6 @@ RE_VM::RE_VM() {}
 
 bool RE_VM::vm(const std::string& target, std::vector<ByteCode>& Code, std::vector<std::string>& regex_result, RE_Config& config)
 {
-    vm_init();
-
     std::ptrdiff_t _code_ip = 0, _code_len = Code.size();
     std::ptrdiff_t _target_start_pos = 0, _target_len = target.length();
     std::ptrdiff_t _matched_index = 0, _matched_len = 0;
@@ -18,25 +16,29 @@ bool RE_VM::vm(const std::string& target, std::vector<ByteCode>& Code, std::vect
 
     while (_target_start_pos < _target_len)
     {
+        vm_init();
         _code_ip = 0;
         _matched_index = _target_start_pos;
         _matched_len = 0;
         is_accept = false;
-        while (!Eval.empty()) Eval.pop(); /* 清空分支栈 */
 
-        while (_matched_index < _target_len && !is_accept && _code_ip < _code_len)
+        __repeat:;
+
+        while (!is_accept && _code_ip < _code_len)
         {
             switch (Code[_code_ip].op)
             {
                 case BYTE_CODE::MATCH:
                 {
+                    /* 匹配超出目标串长度 */
+                    if (_matched_index >= _target_len) goto __backtrack;
                     auto exp_t = reinterpret_cast<std::ptrdiff_t>(Code[_code_ip].exp1);
                     switch (exp_t)
                     {
                         case TOKEN::ANY:
                             if (config.DOTALL || target[_matched_index] != '\n')
                                 goto __match_ok;
-                            goto __match_no;
+                            goto __backtrack;
                             break;
 
                         case TOKEN::DIGIT:
@@ -51,6 +53,8 @@ bool RE_VM::vm(const std::string& target, std::vector<ByteCode>& Code, std::vect
                                 && target[_matched_index] != '\r' 
                                 && target[_matched_index] != '\t' 
                                 && target[_matched_index] != '\v')
+                            _code_ip++;
+                            goto __out;
                             break;
 
                         case TOKEN::BEGIN:
@@ -86,7 +90,7 @@ bool RE_VM::vm(const std::string& target, std::vector<ByteCode>& Code, std::vect
                                 _matched_index += is_lb;
                                 break;
                             }
-                            goto __match_no;
+                            goto __next_loop;
                             break;
                         }
 
@@ -107,16 +111,6 @@ bool RE_VM::vm(const std::string& target, std::vector<ByteCode>& Code, std::vect
 
                     goto __out; /* 防止直接执行 */
 
-                    __backtrack:; /* backtrack */
-                    if (!Eval.empty())
-                    {
-                        _code_ip = Eval.top();
-                        Eval.pop();
-                    } else {
-                        goto __match_no;
-                    }
-                    goto __out; /* 防止直接执行 */
-
                     __match_ok:; /* match ok */
                     _matched_index += 1;
                     _matched_len += 1;
@@ -130,14 +124,65 @@ bool RE_VM::vm(const std::string& target, std::vector<ByteCode>& Code, std::vect
                 {
                     auto exp1 = reinterpret_cast<std::ptrdiff_t>(Code[_code_ip].exp1),
                          exp2 = reinterpret_cast<std::ptrdiff_t>(Code[_code_ip].exp2);
-                    if (exp1 == _code_ip + exp1 && !Eval.empty() && exp2 == Eval.top()) /* 死循环 */
+                    if (exp1 == _code_ip + exp1 && !Split_stack.empty() && exp2 == Split_stack.top().ip) /* 死循环 */
                     {
                         std::cout << " infinite loop." << std::endl;
-                        goto __match_no;
+                        goto __next_loop;
                     }
                     /* 默认选exp1分支 执行失败则进入exp2分支 */
-                    Eval.push(_code_ip + exp2);
+                    Split_stack.push(split_stack_t(_code_ip + exp2, _matched_index, _matched_len));
                     _code_ip += exp1;
+                    break;
+                }
+
+                case BYTE_CODE::REPEAT:
+                {
+                    auto n = reinterpret_cast<std::ptrdiff_t>(Code[_code_ip].exp1),
+                         m = reinterpret_cast<std::ptrdiff_t>(Code[_code_ip].exp2);
+                    Repeat_stack.push(repeat_stack_t(_code_ip, n, m));
+                    _code_ip++;
+                    break;
+                }
+
+                case BYTE_CODE::REPEND:
+                {
+                    if (!Repeat_stack.empty())
+                    {
+                        repeat_stack_t& rs = Repeat_stack.top();
+                        /* {n, m} like {n} {n, } */
+                        if (rs.m == TOKEN::NONE || rs.m == TOKEN::INF)
+                        {
+                            rs.n--;
+                            if (rs.n > 0)
+                            {
+                                _code_ip = rs.ip + 1;
+                                goto __repeat;
+                            }
+                        }
+                        else
+                        {
+                            if (rs.n > rs.m) std::swap(rs.n, rs.m);
+                            /* 至少重复n次 */
+                            rs.n--; rs.m--;
+                            if (rs.n > 0)
+                            {
+                                _code_ip = rs.ip + 1;
+                                goto __repeat;
+                            }
+                            else
+                            {
+                                /* 最多重复m次 */
+                                if (rs.m > 0)
+                                {
+                                    Split_stack.push(split_stack_t(_code_ip + 1, _matched_index, _matched_len)); /* REPEND的下一条指令 */
+                                    _code_ip = rs.ip + 1;
+                                    goto __repeat;
+                                }
+                            }
+                        }
+                        Repeat_stack.pop();
+                    }
+                    _code_ip++;
                     break;
                 }
 
@@ -151,16 +196,30 @@ bool RE_VM::vm(const std::string& target, std::vector<ByteCode>& Code, std::vect
                     break;
 
                 case BYTE_CODE::HALT:
-                    goto __match_no;
+                    goto __next_loop;
                     break;
 
                 default:
                     _code_ip++;
                     break;
+
             }
+            goto __protect_backtrack;
+            __backtrack:; /* backtrack */
+            if (!Split_stack.empty())
+            {
+                _code_ip = Split_stack.top().ip;
+                _matched_index = Split_stack.top().match_index;
+                _matched_len   = Split_stack.top().match_len;
+                Split_stack.pop();
+            } else {
+                goto __next_loop;
+            }
+            __protect_backtrack:;
+            
         }
 
-        if (_matched_index >= _target_len || is_accept)
+        if (is_accept)
         {
             /* match success */
             if (_matched_len > 0)
@@ -172,7 +231,7 @@ bool RE_VM::vm(const std::string& target, std::vector<ByteCode>& Code, std::vect
         else
         {
             /* match error */
-            __match_no:;
+            __next_loop:;
             _target_start_pos++;
         }
     }
@@ -181,9 +240,10 @@ bool RE_VM::vm(const std::string& target, std::vector<ByteCode>& Code, std::vect
     return false;
 }
 
-void RE_VM::vm_init()
+inline void RE_VM::vm_init()
 {
-    while (!Eval.empty()) Eval.pop();
+    while (!Split_stack.empty()) Split_stack.pop();
+    while (!Repeat_stack.empty()) Repeat_stack.pop();
 }
 
 inline int RE_VM::is_line_break(const std::string& s, int _index)
