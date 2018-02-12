@@ -11,6 +11,7 @@ namespace mini_regexp_code
         JMP,    /* jmp addr */
         REPEAT, /* repeat n, m (m>=s>=n) */
         REPEND, /* repend */
+        RANGE,  /* range _start, _end(_start < c < _end) */
         ACCEPT,
     };
 

@@ -48,6 +48,7 @@ namespace mini_regexp_vm
 
     private:
         inline void vm_init();
+        inline void vm_result_init();
         
     };
 }

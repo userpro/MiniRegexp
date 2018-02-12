@@ -31,11 +31,12 @@ namespace mini_regexp_parser
             parse_stack_t(TOKEN _tk, std::ptrdiff_t _n, std::ptrdiff_t _ip):tk(_tk),n(_n),ip(_ip) {}
         };
         /* 
-         * Op => 操作栈
+         * Or_Stack => or栈 专门处理 ||
          * Val => MATCH栈(exp)
          * '(', ')' 两个栈都进入
          */
-        std::stack<parse_stack_t> Op, Val;
+        std::stack<parse_stack_t> Val, Or_Stack;
+
 
         std::vector<ByteCode> Code; /* codegen */
 
@@ -47,6 +48,8 @@ namespace mini_regexp_parser
     private:
         void parser_init();
         bool parse_or();
+        bool parse_square_brace(std::string& exp);
+        inline void val_push_string_tok();
 
     };
 }

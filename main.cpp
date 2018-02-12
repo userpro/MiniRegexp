@@ -1,4 +1,6 @@
 #include <iostream>
+#include <vector>
+#include <string>
 #include "mini_regexp.hpp"
 
 void func(std::vector<std::string>& res)
@@ -21,8 +23,9 @@ void test(std::string reg, std::string tar, std::function<void (std::vector<std:
 
 int main()
 {
-    test("a(o0|c|b|\\d)*.", "daccaaafao0da ac1cgg", func); /* () | * */
-    test("\\bworld", "world world", func); /* \ */
+    test("a(o0|c|b|\\d)*.", "daccaaafao0da ac1cgg", func); /* () | * \d */
+    test("\\bworld", "world world", func); /* \b */
+    test("\\a", "dwf\\asxc", func);
     test("do(es)+", "doesng", func); /* () */
     test("(a|b){1,2}", "abbb", func);
     test("o+?", "oooo", func); /* ?(非)贪婪 */
@@ -31,5 +34,7 @@ int main()
     test("abc$", "abc\nabc", func); /* MULTILINE END */
     test("ab{1,3}", "abcbabababab", func); /* {} */
     test("a.c", "a\nc", func); /* DOTALL */
+    test("[abc]*", "aaddab", func);     /* [] */
+    test("[ab]", "aaddab", func);   /* [] */
     return 0;
 }

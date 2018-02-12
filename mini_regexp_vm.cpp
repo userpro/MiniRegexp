@@ -9,6 +9,7 @@ RE_VM::RE_VM() {}
 
 bool RE_VM::vm(const std::string& target, std::vector<ByteCode>& Code, RE_Config& config)
 {
+    vm_result_init();
     std::ptrdiff_t _code_ip = 0, _code_len = Code.size();
     std::ptrdiff_t _target_start_pos = 0, _target_len = target.length();
     std::ptrdiff_t _matched_index = 0, _matched_len = 0;
@@ -104,17 +105,10 @@ bool RE_VM::vm(const std::string& target, std::vector<ByteCode>& Code, RE_Config
                             break;
                         }
                     }
-
-                    goto __out; /* 防止直接执行 */
-
-                    __match_ok:; /* match ok */
-                    _matched_index += 1;
-                    _matched_len += 1;
-                    _code_ip++;
-
                     __out:;
                     break;
                 }
+                
 
                 case BYTE_CODE::SPLIT:
                 {
@@ -182,6 +176,18 @@ bool RE_VM::vm(const std::string& target, std::vector<ByteCode>& Code, RE_Config
                     break;
                 }
 
+                case BYTE_CODE::RANGE:
+                {
+                    auto a = reinterpret_cast<std::ptrdiff_t>(Code[_code_ip].exp1),
+                         b = reinterpret_cast<std::ptrdiff_t>(Code[_code_ip].exp2);
+
+                    if (is_range_in(target[_matched_index], a, b))
+                        goto __match_ok;
+                    else
+                        goto __backtrack;
+                    break;
+                }
+
                 case BYTE_CODE::JMP:
                     _code_ip += reinterpret_cast<std::ptrdiff_t>(Code[_code_ip].exp1);
                     break;
@@ -200,6 +206,13 @@ bool RE_VM::vm(const std::string& target, std::vector<ByteCode>& Code, RE_Config
                     break;
 
             }
+
+            goto __protect_match_ok;
+            __match_ok:; /* match ok */
+            _matched_index += 1;
+            _matched_len += 1;
+            _code_ip++;
+            __protect_match_ok:;
 
             goto __protect_backtrack;
             __backtrack:; /* backtrack */
@@ -241,6 +254,10 @@ inline void RE_VM::vm_init()
 {
     while (!Split_stack.empty()) Split_stack.pop();
     while (!Repeat_stack.empty()) Repeat_stack.pop();
+}
+
+inline void RE_VM::vm_result_init()
+{
     regex_result.matched.clear();
 }
 

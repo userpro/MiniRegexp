@@ -37,10 +37,10 @@ namespace mini_regexp_token
     inline int is_SPACE(char c)
     {
         return (c != '\f' 
-                && c != '\n' 
-                && c != '\r' 
-                && c != '\t' 
-                && c != '\v');
+            && c != '\n' 
+            && c != '\r' 
+            && c != '\t' 
+            && c != '\v');
     }
 
     inline int is_line_break(const std::string& s, int _index)
@@ -56,6 +56,18 @@ namespace mini_regexp_token
     inline int is_range_in(char c, char start, char end)
     {
         return (c - start >= 0 && end - c >= 0);
+    }
+
+    inline int is_escape_char(char c)
+    {
+        return (c == '\n'
+            || c == '\r'
+            || c == '\t'
+            || c == '\f'
+            || c == '\v'
+            || c == '\b'
+            || c == '\a'
+            );
     }
 }
 
