@@ -217,7 +217,6 @@ bool RE_Parser::parser(RE_Lexer& _lexer, RE_Config& config)
                 }
                 if (!Op.empty()) Op.pop();
                 else std::cout << "mismatch parentheses." << std::endl;
-
             }
 
             case TOKEN::EXP: break;

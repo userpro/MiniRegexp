@@ -23,15 +23,9 @@ using namespace mini_regexp_config;
 class mini_regexp
 {
 public:
-    struct Result {
-        std::vector<std::string> matched;
-    } regex_result;
-
-    bool Multiline; /* for ^ and $ */
-    
     mini_regexp();
     bool compile(const std::string& regexp_str);
-    bool match(const std::string& match_str, std::function<void(Result&)> callback = nullptr);
+    bool match(const std::string& match_str, std::function<void(std::vector<std::string>& Result)> callback = nullptr);
     void output_code();
 
 private:

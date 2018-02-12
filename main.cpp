@@ -1,15 +1,15 @@
 #include <iostream>
 #include "mini_regexp.hpp"
 
-void func(mini_regexp::Result& res)
+void func(std::vector<std::string>& res)
 {
     std::cout << "Result: " << std::endl;
-    for (auto i : res.matched)
+    for (auto i : res)
         std::cout << "  " << i;
     std::cout << std::endl;
 }
 
-void test(std::string reg, std::string tar, std::function<void (mini_regexp::Result&)> callback)
+void test(std::string reg, std::string tar, std::function<void (std::vector<std::string>&)> callback)
 {
     static mini_regexp regex;
     regex.compile(reg);
@@ -21,14 +21,15 @@ void test(std::string reg, std::string tar, std::function<void (mini_regexp::Res
 
 int main()
 {
-    test("a(o0|c|b|\\d)*.", "daccaaafao0da ac1cgg", func);
-    test("\\bworld", "world world", func);
-    test("do(es)+", "doesng", func);
-    test("(a|b)*abb", "abbb", func);
-    test("o+?", "oooo", func);
-    test("a(o*?)d", "aoood", func);
-    test("^abc", "abcabc", func);
-    test("abc$", "abc\nabc", func);
-    test("ab{1,3}", "abcbabababab", func);
+    test("a(o0|c|b|\\d)*.", "daccaaafao0da ac1cgg", func); /* () | * */
+    test("\\bworld", "world world", func); /* \ */
+    test("do(es)+", "doesng", func); /* () */
+    test("(a|b){1,2}", "abbb", func);
+    test("o+?", "oooo", func); /* ?(非)贪婪 */
+    test("a(o*?)d", "aoood", func); /* ?(非)贪婪 */
+    test("^abc", "abcabc", func); /* START */
+    test("abc$", "abc\nabc", func); /* MULTILINE END */
+    test("ab{1,3}", "abcbabababab", func); /* {} */
+    test("a.c", "a\nc", func); /* DOTALL */
     return 0;
 }

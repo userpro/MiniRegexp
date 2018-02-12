@@ -7,7 +7,7 @@ using namespace mini_regexp_vm;
 
 RE_VM::RE_VM() {}
 
-bool RE_VM::vm(const std::string& target, std::vector<ByteCode>& Code, std::vector<std::string>& regex_result, RE_Config& config)
+bool RE_VM::vm(const std::string& target, std::vector<ByteCode>& Code, RE_Config& config)
 {
     std::ptrdiff_t _code_ip = 0, _code_len = Code.size();
     std::ptrdiff_t _target_start_pos = 0, _target_len = target.length();
@@ -36,25 +36,21 @@ bool RE_VM::vm(const std::string& target, std::vector<ByteCode>& Code, std::vect
                     switch (exp_t)
                     {
                         case TOKEN::ANY:
-                            if (config.DOTALL || target[_matched_index] != '\n')
+                            if (is_ANY(target[_matched_index], config.DOTALL))
                                 goto __match_ok;
                             goto __backtrack;
                             break;
 
                         case TOKEN::DIGIT:
-                            if (target[_matched_index] >= '0' && target[_matched_index] <= '9')
+                            if (is_range_in(target[_matched_index], '0', '9'))
                                 goto __match_ok;
                             goto __backtrack;
                             break;
 
                         case TOKEN::SPACE:
-                            if (target[_matched_index] != '\f' 
-                                && target[_matched_index] != '\n' 
-                                && target[_matched_index] != '\r' 
-                                && target[_matched_index] != '\t' 
-                                && target[_matched_index] != '\v')
-                            _code_ip++;
-                            goto __out;
+                            if (is_SPACE(target[_matched_index]))
+                                goto __match_ok;
+                            goto __backtrack;
                             break;
 
                         case TOKEN::BEGIN:
@@ -204,6 +200,7 @@ bool RE_VM::vm(const std::string& target, std::vector<ByteCode>& Code, std::vect
                     break;
 
             }
+
             goto __protect_backtrack;
             __backtrack:; /* backtrack */
             if (!Split_stack.empty())
@@ -223,7 +220,7 @@ bool RE_VM::vm(const std::string& target, std::vector<ByteCode>& Code, std::vect
         {
             /* match success */
             if (_matched_len > 0)
-                regex_result.push_back(target.substr(_target_start_pos, _matched_len));
+                regex_result.matched.push_back(target.substr(_target_start_pos, _matched_len));
             else
                 _matched_len = 1;
             _target_start_pos += _matched_len;
@@ -244,16 +241,7 @@ inline void RE_VM::vm_init()
 {
     while (!Split_stack.empty()) Split_stack.pop();
     while (!Repeat_stack.empty()) Repeat_stack.pop();
-}
-
-inline int RE_VM::is_line_break(const std::string& s, int _index)
-{
-    if (s.length() > _index + 2 && s[_index] == '\r' && s[_index] == '\n')
-        return 2;
-    else if (s[_index] == '\r' || s[_index] == '\n')
-        return 1;
-    else
-        return 0;
+    regex_result.matched.clear();
 }
 
 #endif

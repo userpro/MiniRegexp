@@ -3,6 +3,7 @@
 
 namespace mini_regexp_token
 {
+
     enum TOKEN
     {
         ERR,        /* error */
@@ -27,6 +28,35 @@ namespace mini_regexp_token
         INF = -6,
         NONE = -7
     };
+
+    inline int is_ANY(char c, bool dotall = false)
+    {
+        return dotall ? 1 : !!(c != '\n');
+    }
+
+    inline int is_SPACE(char c)
+    {
+        return (c != '\f' 
+                && c != '\n' 
+                && c != '\r' 
+                && c != '\t' 
+                && c != '\v');
+    }
+
+    inline int is_line_break(const std::string& s, int _index)
+    {
+        if (s.length() > _index + 2 && s[_index] == '\r' && s[_index] == '\n')
+            return 2;
+        else if (s[_index] == '\r' || s[_index] == '\n')
+            return 1;
+        else
+            return 0;
+    }
+
+    inline int is_range_in(char c, char start, char end)
+    {
+        return (c - start >= 0 && end - c >= 0);
+    }
 }
 
 #endif

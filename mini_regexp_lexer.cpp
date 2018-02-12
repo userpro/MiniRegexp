@@ -60,9 +60,9 @@ void RE_Lexer::lexer(const std::string& regexp, RE_Config& config)
             {
                 unsigned int start_pos = _index, end_pos = _index;
                 while (end_pos < _len 
-                    && ((regexp[end_pos] >= 'a' && regexp[end_pos] <= 'z') 
-                        || (regexp[end_pos] >= 'A' && regexp[end_pos] <= 'Z') 
-                        || (regexp[end_pos] >= '0' && regexp[end_pos] <= '9') 
+                    && ((is_range_in(regexp[end_pos], 'a', 'z')) 
+                        || is_range_in(regexp[end_pos], 'A', 'Z') 
+                        || is_range_in(regexp[end_pos], '0', '9') 
                         || regexp[end_pos] == '_'))
                     end_pos++;
                 Text.push_back(regexp.substr(start_pos, end_pos - start_pos));

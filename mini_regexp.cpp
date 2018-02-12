@@ -4,7 +4,7 @@
 #include "mini_regexp.hpp"
 
 mini_regexp::mini_regexp()
-    :regexp(""),target(""),Multiline(true)
+    :regexp(""),target("")
 {}
 
 bool mini_regexp::compile(const std::string& regexp_str)
@@ -17,12 +17,12 @@ bool mini_regexp::compile(const std::string& regexp_str)
 }
 
 
-bool mini_regexp::match(const std::string& match_str, std::function<void(Result&)> callback)
+bool mini_regexp::match(const std::string& match_str, std::function<void(std::vector<std::string>&)> callback)
 {
     bool flag = false;
     target = match_str;
-    mini_vm.vm(match_str, mini_parser.Code, regex_result.matched, mini_config);
-    if (callback) callback(regex_result);
+    mini_vm.vm(match_str, mini_parser.Code, mini_config);
+    if (callback) callback(mini_vm.regex_result.matched);
     return flag;
 }
 
@@ -30,7 +30,6 @@ void mini_regexp::_reset()
 {
     regexp = "";
     target = "";
-    regex_result.matched.clear();
 }
 
 void mini_regexp::output_code()

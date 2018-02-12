@@ -18,6 +18,11 @@ namespace mini_regexp_vm
 
     class RE_VM
     {
+    public:
+        struct Result {
+            std::vector<std::string> matched;
+        } regex_result;
+
     private:
         struct split_stack_t
         {
@@ -39,11 +44,10 @@ namespace mini_regexp_vm
 
     public:
         RE_VM();
-        bool vm(const std::string& target, std::vector<ByteCode>& Code, std::vector<std::string>& regex_result, RE_Config& config);
+        bool vm(const std::string& target, std::vector<ByteCode>& Code, RE_Config& config);
 
     private:
         inline void vm_init();
-        inline int is_line_break(const std::string& s, int _index);
         
     };
 }
