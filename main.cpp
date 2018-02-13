@@ -35,6 +35,6 @@ int main()
     test("ab{1,3}", "abcbabababab", func); /* {} */
     test("a.c", "a\nc", func); /* DOTALL */
     test("[abc]*", "aaddab", func);     /* [] */
-    test("[ab]", "aaddab", func);   /* [] */
+    test("[^a-dh-mzn]", "axyawczmladddknwdnjkgnoiab", func);   /* [] */
     return 0;
 }

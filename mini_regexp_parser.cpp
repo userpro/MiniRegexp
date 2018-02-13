@@ -373,19 +373,14 @@ bool RE_Parser::parse_square_brace(std::string& s)
 
     while (_index < s.length())
     {
-        /* 向后看2个 */
-        if (_index + 2 < s.length())
+        /* 向后看2个 如果存在a-z这样的表达式 */
+        if (_index + 2 < s.length() && s[_index + 1] == '-')
         {
-            /* 如果存在a-z这样的表达式 */
-            if (s[_index + 1] == '-')
-            {
-                ins.push_back(CODE_ELM(BYTE_CODE::RANGE, s[_index], s[_index + 2]));
-                _index += 3;
-            }
+            ins.push_back(CODE_ELM(BYTE_CODE::RANGE, s[_index], s[_index + 2]));
+            _index += 3;
         }
-
         /* 处理转义字符 */
-        if (s[_index] == '\\')
+        else if (s[_index] == '\\')
         {
             if (_index + 1 < s.length())
             {
@@ -399,15 +394,19 @@ bool RE_Parser::parse_square_brace(std::string& s)
                 }
             }
         }
+        /* 普通匹配一个字符 这里使用RANGE特殊情况 */
         else
+        {
             ins.push_back(CODE_ELM(BYTE_CODE::RANGE, s[_index], s[_index]));
-        _index++;
+            _index++;
+        }
     }
 
     parse_stack_t exp;
     exp.ip = Code.size();
     exp.tk = TOKEN::EXP;
     ByteCode bc1, bc2;
+    /* 预组合 */
     if (ins.size() == 1)
     {
         Code.push_back(ins.back()); ins.pop_back();
@@ -429,6 +428,7 @@ bool RE_Parser::parse_square_brace(std::string& s)
         return false;
     }
 
+    /* 指令用split组合 */
     while (!ins.empty())
     {
         bc1 = ins.back(); ins.pop_back();
@@ -440,8 +440,17 @@ bool RE_Parser::parse_square_brace(std::string& s)
 
     if (_not)
     {
-        Code.insert(Code.begin() + exp.ip + exp.n, CODE_ELM(BYTE_CODE::HALT, 0, 0));
+        /*
+         * 0 split 1, 3
+         * 1 exp1
+         * 2 halt
+         * 3 match any
+         * 4 ...
+         */
         Code.insert(Code.begin() + exp.ip, CODE_ELM(BYTE_CODE::SPLIT, 1, exp.n + 2));
+        Code.insert(Code.begin() + exp.ip + exp.n + 1, CODE_ELM(BYTE_CODE::HALT, 0, 0));
+        Code.insert(Code.begin() + exp.ip + exp.n + 2, CODE_ELM(BYTE_CODE::MATCH, TOKEN::ANY, 0));
+        exp.n += 3;
     }
 
     Val.push(exp);
