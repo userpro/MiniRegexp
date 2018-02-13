@@ -40,6 +40,7 @@ void RE_Lexer::lexer(const std::string& regexp, RE_Config& config)
 
             case ']':  Token.push_back(TOKEN::SQUARE_RBRACKET); _index++; break;
 
+            /* 正则规定的特殊转义字符 */
             case '\\':
             {
                 switch (regexp[_index + 1])
@@ -50,7 +51,8 @@ void RE_Lexer::lexer(const std::string& regexp, RE_Config& config)
 
                     default:
                         /* 加到string中 */
-                        goto __lex_string;
+                        Text.push_back(regexp.substr(_index, 2));
+                        Token.push_back(TOKEN::STRING);
                         break;
 
                 }
@@ -60,7 +62,6 @@ void RE_Lexer::lexer(const std::string& regexp, RE_Config& config)
 
             default:
             {
-                __lex_string:;
                 unsigned int start_pos = _index, end_pos = _index;
                 while (end_pos < _len 
                     && 
@@ -68,7 +69,7 @@ void RE_Lexer::lexer(const std::string& regexp, RE_Config& config)
                         || is_range_in(regexp[end_pos], 'a', 'z')
                         || is_range_in(regexp[end_pos], 'A', 'Z') 
                         || is_range_in(regexp[end_pos], '0', '9') 
-                        || regexp[end_pos] == '_' || regexp[end_pos] == '\\'))
+                        || regexp[end_pos] == '_'))
                     end_pos++;
                 Text.push_back(regexp.substr(start_pos, end_pos - start_pos));
                 Token.push_back(TOKEN::STRING);

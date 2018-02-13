@@ -1,7 +1,6 @@
 #ifndef MINI_REGEXP_PARSER_H_
 #define MINI_REGEXP_PARSER_H_
 
-#include <stack>
 #include <vector>
 #include <algorithm>
 #include <iostream>
@@ -35,8 +34,7 @@ namespace mini_regexp_parser
          * Val => MATCH栈(exp)
          * '(', ')' 两个栈都进入
          */
-        std::stack<parse_stack_t> Val, Or_Stack;
-
+        std::vector<parse_stack_t> Parser_Stack;
 
         std::vector<ByteCode> Code; /* codegen */
 
@@ -47,9 +45,17 @@ namespace mini_regexp_parser
 
     private:
         void parser_init();
-        bool parse_or();
+        void parse_string(RE_Lexer& _lexer);
+        void parse_any();
+        void parse_digit();
+        void parse_plus();
+        bool parse_exp();
+        void parse_question();
+        void parse_closure();
+        
+        int  parse_brace(RE_Lexer& _lexer, std::ptrdiff_t _index);
         bool parse_square_brace(std::string& exp);
-        inline void val_push_string_tok();
+        inline void val_push_string_tok(RE_Lexer& _lexer, std::ptrdiff_t _index);
 
     };
 }

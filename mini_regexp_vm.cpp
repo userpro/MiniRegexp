@@ -2,8 +2,16 @@
 #define MINI_REGEXP_VM_CPP_
 
 #include "mini_regexp_vm.hpp"
-
 using namespace mini_regexp_vm;
+
+/*
+
+    next:
+        尽量减少 MATCH的特殊值
+        把特殊值在parser阶段尽可能转化掉
+
+*/
+
 
 RE_VM::RE_VM() {}
 
@@ -38,12 +46,6 @@ bool RE_VM::vm(const std::string& target, std::vector<ByteCode>& Code, RE_Config
                     {
                         case TOKEN::ANY:
                             if (is_ANY(target[_matched_index], config.DOTALL))
-                                goto __match_ok;
-                            goto __backtrack;
-                            break;
-
-                        case TOKEN::DIGIT:
-                            if (is_range_in(target[_matched_index], '0', '9'))
                                 goto __match_ok;
                             goto __backtrack;
                             break;

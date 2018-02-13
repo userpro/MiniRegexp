@@ -23,7 +23,7 @@ void test(std::string reg, std::string tar, std::function<void (std::vector<std:
 
 int main()
 {
-    test("a(o0|c|b|\\d)*.", "daccaaafao0da ac1cgg", func); /* () | * \d */
+    test("a(c|b|o\\d)*.", "daccaaafao0da ac1cgg", func); /* () | * \d */
     test("\\bworld", "world world", func); /* \b */
     test("\\a", "dwf\\asxc", func);
     test("do(es)+", "doesng", func); /* () */
@@ -36,5 +36,6 @@ int main()
     test("a.c", "a\nc", func); /* DOTALL */
     test("[abc]*", "aaddab", func);     /* [] */
     test("[^a-dh-mzn]", "axyawczmladddknwdnjkgnoiab", func);   /* [] */
+    test("\\d*", "12385567", func);
     return 0;
 }
