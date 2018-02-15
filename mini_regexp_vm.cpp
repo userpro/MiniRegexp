@@ -4,15 +4,6 @@
 #include "mini_regexp_vm.hpp"
 using namespace mini_regexp_vm;
 
-/*
-
-    next:
-        尽量减少 MATCH的特殊值
-        把特殊值在parser阶段尽可能转化掉
-
-*/
-
-
 RE_VM::RE_VM() {}
 
 bool RE_VM::vm(const std::string& target, std::vector<ByteCode>& Code, RE_Config& config)
@@ -49,43 +40,6 @@ bool RE_VM::vm(const std::string& target, std::vector<ByteCode>& Code, RE_Config
                                 goto __match_ok;
                             goto __backtrack;
                             break;
-
-                        case TOKEN::BEGIN:
-                        {
-                            if (_matched_index == 0)
-                            {
-                                _code_ip++;
-                                break;
-                            }
-
-                            int is_lb = is_line_break(target, _matched_index);
-                            if (config.MULTILINE && is_lb)
-                            {
-                                _code_ip++;
-                                _matched_index += is_lb;
-                                break;
-                            }
-                            goto __fail_loop;
-                            break;
-                        }
-
-                        case TOKEN::END:
-                        {
-                            if (_matched_index == _target_len)
-                            {
-                                _code_ip++;
-                                break;
-                            }
-                            int is_lb = is_line_break(target, _matched_index);
-                            if (config.MULTILINE && is_lb)
-                            {
-                                _code_ip++;
-                                _matched_index += is_lb;
-                                break;
-                            }
-                            goto __next_loop;
-                            break;
-                        }
 
                         default:
                         {

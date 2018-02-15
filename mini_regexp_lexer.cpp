@@ -17,8 +17,6 @@ void RE_Lexer::lexer(const std::string& regexp, RE_Config& config)
             case '.':  Token.push_back(TOKEN::ANY);       _index++; break;
             case '+':  Token.push_back(TOKEN::PLUS);      _index++; break;
             case '?':  Token.push_back(TOKEN::QUESTION);  _index++; break;
-            case '^':  Token.push_back(TOKEN::BEGIN);     _index++; break;
-            case '$':  Token.push_back(TOKEN::END);       _index++; break;
             case '*':  Token.push_back(TOKEN::CLOSURE);   _index++; break;
             case '|':  Token.push_back(TOKEN::OR);        _index++; break;
             case '(':  Token.push_back(TOKEN::LBRACKET);  _index++; break;
@@ -26,6 +24,18 @@ void RE_Lexer::lexer(const std::string& regexp, RE_Config& config)
             case ',':  Token.push_back(TOKEN::COMMA);     _index++; break;
             case '{':  Token.push_back(TOKEN::LBRACE);    _index++; break;
             case '}':  Token.push_back(TOKEN::RBRACE);    _index++; break;
+
+            case '^': 
+                if (config.MULTILINE) lexer_special_char("\2\n\r"); 
+                else lexer_special_char("\2"); 
+                _index++;
+                break;
+            
+            case '$':
+                if (config.MULTILINE) lexer_special_char("\2\n\r"); 
+                else lexer_special_char("\2"); 
+                _index++;
+                break;
 
             case '[':  
             {
@@ -45,6 +55,7 @@ void RE_Lexer::lexer(const std::string& regexp, RE_Config& config)
                 switch (regexp[_index + 1])
                 {
                     case 'b': Token.push_back(TOKEN::STRING); Text.push_back(" ");  break;
+                    case 'B': lexer_special_char("^ ");  break;
                     case 'd': lexer_special_char("0-9"); break;
                     case 'D': lexer_special_char("^0-9"); break;
                     case 's': lexer_special_char(" \f\n\r\t\v"); break;

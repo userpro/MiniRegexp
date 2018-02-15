@@ -55,10 +55,6 @@ bool RE_Parser::parser(RE_Lexer& _lexer, RE_Config& config)
             case TOKEN::LBRACE: { _index = parse_brace(_lexer, _index); break; }
             /* '}' */
             case TOKEN::RBRACE: break;
-            /* '^' */
-            case TOKEN::BEGIN: _begin = true; break;
-            /* '$' */
-            case TOKEN::END: _end = true; break;
             /* '|' */
             case TOKEN::OR:
                 /* OR 延后处理 */
@@ -92,11 +88,6 @@ bool RE_Parser::parser(RE_Lexer& _lexer, RE_Config& config)
 
     if (!Parser_Stack.empty())
         parse_exp();
-
-    /* ^ */
-    if (_begin) Code.insert(Code.begin(), CODE_ELM(BYTE_CODE::MATCH, TOKEN::BEGIN, 0));
-    /* $ */
-    if (_end)   Code.push_back(CODE_ELM(BYTE_CODE::MATCH, TOKEN::END, 0));
     
     Code.push_back(CODE_ELM(BYTE_CODE::ACCEPT, 0, 0));
     return true;
@@ -119,8 +110,6 @@ void RE_Parser::output_code()
                 switch (exp_t)
                 {
                     case TOKEN::ANY:   std::cout << "  MATCH " << "ANY" << std::endl;   break;
-                    case TOKEN::BEGIN: std::cout << "  MATCH " << "^" << std::endl;     break;
-                    case TOKEN::END:   std::cout << "  MATCH " << "$" << std::endl;     break;
                     default:
                         std::cout << "  MATCH " << (std::string)reinterpret_cast<const char*>(exp_t) << std::endl;
                 }

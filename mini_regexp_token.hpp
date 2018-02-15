@@ -21,8 +21,6 @@ namespace mini_regexp_token
         RBRACE,     /* '}' */
         EXP,        /* stack parse */
         ANY = -1,   /* '.' */
-        BEGIN = -4,      /* '^' */
-        END = -5,        /* '$' */
         INF = -6,
         NONE = -7
     };
@@ -30,16 +28,6 @@ namespace mini_regexp_token
     inline int is_ANY(char c, bool dotall = false)
     {
         return dotall ? 1 : !!(c != '\n');
-    }
-
-    inline int is_line_break(const std::string& s, int _index)
-    {
-        if (s.length() > _index + 2 && s[_index] == '\r' && s[_index] == '\n')
-            return 2;
-        else if (s[_index] == '\r' || s[_index] == '\n')
-            return 1;
-        else
-            return 0;
     }
 
     inline int is_range_in(char c, char start, char end)

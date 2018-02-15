@@ -39,5 +39,7 @@ int main()
     test("[^a-dh-mzn]", "axyawczmladddknwdnjkgnoiab", func);   /* [] */
     test("\\d*", "12385567", func);
     test("a\\s*b", "a  b", func);
+    test("^[0-9]*[1-9][0-9]*", "2sd134\n123sd2", func);
+    // test("[(ab)ac]", "abc", func);
     return 0;
 }
