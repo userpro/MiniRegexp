@@ -33,12 +33,12 @@ int main()
     test("a(o*?)d", "aoood", func); /* ?(非)贪婪 */
     test("^abc", "abcabc", func); /* START */
     test("abc$", "abc\nabc", func); /* MULTILINE END */
-    test("ab{1,3}", "abcbabababab", func); /* {} */
     test("a.c", "a\nc", func); /* DOTALL */
     test("[abc]*", "aaddab", func);     /* [] */
     test("[^a-dh-mzn]", "axyawczmladddknwdnjkgnoiab", func);   /* [] */
     test("\\d*", "12385567", func);
     test("a.*b", "aaabaab", func);
     test("^[0-9]*[1-9][0-9]*", "2sd134\n123sd2", func);
+    test("a{3,}b{1,2}d{1,22}e{11,12}f{1}", "aaaabbddeeeeeeeeeeeff", func);
     return 0;
 }

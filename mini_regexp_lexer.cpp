@@ -22,7 +22,13 @@ void RE_Lexer::lexer(const std::string& regexp, RE_Config& config)
             case '(':  Token.push_back(TOKEN::LBRACKET);  _index++; break;
             case ')':  Token.push_back(TOKEN::RBRACKET);  _index++; break;
             case ',':  Token.push_back(TOKEN::COMMA);     _index++; break;
-            case '{':  Token.push_back(TOKEN::LBRACE);    _index++; break;
+            case '{':
+            {
+                Token.push_back(TOKEN::LBRACE);
+                get_close_exp(regexp, _index, '}');
+                break;
+            }
+
             case '}':  Token.push_back(TOKEN::RBRACE);    _index++; break;
 
             case '^': 
@@ -40,10 +46,7 @@ void RE_Lexer::lexer(const std::string& regexp, RE_Config& config)
             case '[':  
             {
                 Token.push_back(TOKEN::SQUARE_LBRACKET);
-                std::ptrdiff_t st = _index + 1;
-                while (regexp[++_index] != ']');
-                Text.push_back(regexp.substr(st, _index - st));
-                Token.push_back(TOKEN::STRING);
+                get_close_exp(regexp, _index, ']');
                 break;
             }
 
@@ -106,6 +109,14 @@ inline void RE_Lexer::lexer_special_char(std::string s)
     Token.push_back(TOKEN::STRING);
     Token.push_back(TOKEN::SQUARE_RBRACKET);
     Text.push_back(s);
+}
+
+inline void RE_Lexer::get_close_exp(const std::string& regexp, std::ptrdiff_t& _index, char _end)
+{
+    auto st = _index + 1;
+    while (regexp[++_index] != _end);
+    Text.push_back(regexp.substr(st, _index - st));
+    Token.push_back(TOKEN::STRING);
 }
 
 #endif

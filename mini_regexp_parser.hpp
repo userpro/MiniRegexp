@@ -52,7 +52,7 @@ namespace mini_regexp_parser
         void parse_question();
         void parse_closure();
         
-        int  parse_brace(RE_Lexer& _lexer, std::ptrdiff_t _index);
+        bool parse_brace(std::string& exp);
         bool parse_square_brace(std::string& exp);
 
     };

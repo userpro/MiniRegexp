@@ -25,6 +25,8 @@ namespace mini_regexp_lexer
         void lexer_init();
         void lexer_special_char(std::string s);
 
+        inline void get_close_exp(const std::string& regexp, std::ptrdiff_t& _index, char _end);
+
     };
 }
 

@@ -46,7 +46,13 @@ bool RE_Parser::parser(RE_Lexer& _lexer, RE_Config& config)
             /* ']' */
             case TOKEN::SQUARE_RBRACKET: break;
             /* '{' 'string' '}' */
-            case TOKEN::LBRACE: { _index = parse_brace(_lexer, _index); break; }
+            case TOKEN::LBRACE: 
+            {
+                parse_brace(_lexer.Text.back()); 
+                _lexer.Text.pop_back();
+                _index += 2;
+                break; 
+            }
             /* '}' */
             case TOKEN::RBRACE: break;
             /* '|' */
@@ -116,7 +122,7 @@ void RE_Parser::output_code()
             case BYTE_CODE::HALT:   std::cout << "  HALT" << std::endl;   break;
             case BYTE_CODE::REPEND: std::cout << "  REPEND" << std::endl;  break;
             case BYTE_CODE::REPEAT: 
-                std::cout << "  REPEAT " << reinterpret_cast<std::ptrdiff_t>(i.exp1) << ", " << reinterpret_cast<std::ptrdiff_t>(i.exp2) << std::endl;
+                std::cout << "  REPEAT " << reinterpret_cast<std::ptrdiff_t>(i.exp1) << std::endl;
                 break;
             default:
                 std::cout << "  unknown unknown unknown" << std::endl;
@@ -278,85 +284,68 @@ bool RE_Parser::parse_exp()
     return true;
 }
 
-int RE_Parser::parse_brace(RE_Lexer& _lexer, std::ptrdiff_t _index)
+bool RE_Parser::parse_brace(std::string& exp)
 {
     /*
-     * 0 repeat n=1,m=2
+     * 0 repeat n
      * 1 exp1
      * 2 repend
-     * 3 (split 1,4)(if m = TOKEN::INF)
+     * 3 (split 1,4)
+     * 4 ...
      */
-    int n,m;
-    /* get 'n' */
-    if (_lexer.Token[_index + 1] == TOKEN::STRING)
-    {
-        n = std::stoi(_lexer.Text.back());
-        _lexer.Text.pop_back();
-        _index++;
-    }
-    else
-    {
-        std::cout << "parser {} err" << std::endl;
-        return -1;
-    }
-
-    /* after 'n'(Token[_index] is 'n') */
-    if (_lexer.Token[_index + 1] == TOKEN::COMMA)
-    {
-        /* '{' 'n,' 'm' '}' */
-        if (_lexer.Token[_index + 2] == TOKEN::STRING)
-        {
-            m = std::stoi(_lexer.Text.back());
-            _lexer.Text.pop_back();
-            _index += 2;
-        }
-        /* '{' 'n' ',' '}' */
-        else if (_lexer.Token[_index + 1] == TOKEN::RBRACE) 
-        {
-            m = TOKEN::INF;
-            _index++;
-        }
-        /* err */
-        else
-        { 
-            std::cout << "mismatch brace!" << std::endl;
-            return -1;
-        }
-    }
-    /* '{' 'n' '}' */
-    else if (_lexer.Token[_index + 1] == TOKEN::RBRACE) 
-    {
-        m = TOKEN::NONE;
-        _index++;
-    }
-    /* err */
-    else
-    { 
-        std::cout << "mismatch brace!" << std::endl;
-        return -1;
-    }
-
-    /* '?'启用非贪婪模式 */
-    if (_index + 1 < _lexer.Token.size() && _lexer.Token[_index + 1] == TOKEN::QUESTION)
-        m = TOKEN::NONE;
-
-    parse_stack_t exp = Parser_Stack.back(); 
+    int n, m;
+    auto domma = exp.find(",");
+    
+    auto exp1 = Parser_Stack.back();
     Parser_Stack.pop_back();
+    
+    /* {n,m} 处理n */
+    n = std::stoi(exp.substr(0, domma));
+    Code.insert(Code.begin() + exp1.ip + exp1.n, CODE_ELM(BYTE_CODE::REPEND, 0, 0));
+    Code.insert(Code.begin() + exp1.ip, CODE_ELM(BYTE_CODE::REPEAT, n, 0));
+    n = std::stoi(exp.substr(0, domma));
+    exp1.n += 2;
+    exp1.tk = TOKEN::EXP;
 
-    Code.insert(Code.begin() + exp.ip + exp.n, CODE_ELM(BYTE_CODE::REPEND, 0, 0));
-    Code.insert(Code.begin() + exp.ip, CODE_ELM(BYTE_CODE::REPEAT, n, m));
-
-    /* like {1, } */
-    if (m == TOKEN::INF)
+    if (domma != std::string::npos)
     {
-        Code.insert(Code.begin() + exp.ip + exp.n + 1, CODE_ELM(BYTE_CODE::SPLIT, -(exp.n + 1), 1));
-        exp.n += 1;
+        int m_ip = exp1.ip + exp1.n;
+        std::vector<ByteCode> tmp(exp1.n);
+        std::copy(Code.begin() + exp1.ip, Code.begin() + exp1.ip + exp1.n, tmp.begin());
+        Code.insert(Code.begin() + m_ip, tmp.begin(), tmp.end());
+        /* {n,m}
+         *
+         * 0 repeat m
+         * 1 split 1, 4
+         * 2 exp
+         * 3 repend
+         * 4 ...
+         */
+        if (exp.length() - domma - 1 > 0) 
+        {
+            m = std::stoi(exp.substr(domma + 1, exp.length() - domma - 1));
+            Code[m_ip].exp1 = reinterpret_cast<void*>(m - n);
+            Code.insert(Code.begin() + m_ip + 1, CODE_ELM(BYTE_CODE::SPLIT, 1, exp1.n));
+            exp1.n += (exp1.n + 1);
+        }
+        /* {n,}
+         * 
+         * 0 split 1, 3
+         * 1 exp
+         * 2 split 1, 3
+         * 3 ...
+         */
+        else
+        {
+            Code[m_ip] = CODE_ELM(BYTE_CODE::SPLIT, 1, exp1.n);
+            Code[m_ip + exp1.n - 1] = CODE_ELM(BYTE_CODE::SPLIT, -(exp1.n - 2), 1);
+            exp1.n *= 2;
+        }
     }
 
-    exp.n += 2;
-    exp.tk = TOKEN::EXP;
-    Parser_Stack.push_back(exp);
-    return _index;
+    Parser_Stack.push_back(exp1);
+
+    return true;
 }
 
 bool RE_Parser::parse_square_brace(std::string& s)

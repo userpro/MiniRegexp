@@ -72,57 +72,23 @@ bool RE_VM::vm(const std::string& target, std::vector<ByteCode>& Code, RE_Config
                 }
 
                 case BYTE_CODE::REPEAT:
-                {
-                    auto n = reinterpret_cast<std::ptrdiff_t>(Code[_code_ip].exp1),
-                         m = reinterpret_cast<std::ptrdiff_t>(Code[_code_ip].exp2);
-                    Repeat_stack.push(repeat_stack_t(_code_ip, n, m));
+                    Repeat_stack.push(repeat_stack_t(_code_ip, reinterpret_cast<std::ptrdiff_t>(Code[_code_ip].exp1)));
                     _code_ip++;
                     break;
-                }
 
                 case BYTE_CODE::REPEND:
                 {
                     if (!Repeat_stack.empty())
                     {
                         repeat_stack_t& rs = Repeat_stack.top();
-                        /* {n, m} like {n} {n, } */
-                        if (rs.m == TOKEN::NONE || rs.m == TOKEN::INF)
+                        if (--rs.n > 0) 
                         {
-                            rs.n--;
-                            if (rs.n > 0)
-                            {
-                                _code_ip = rs.ip + 1;
-                                goto __repeat;
-                            }
-                        }
-                        else
-                        {
-                            if (rs.n > rs.m) std::swap(rs.n, rs.m);
-                            /* 至少重复n次 */
-                            rs.n--; rs.m--;
-                            if (rs.n > 0)
-                            {
-                                _code_ip = rs.ip + 1;
-                                goto __repeat;
-                            }
-                            else
-                            {
-                                /* 最多重复m次 */
-                                if (rs.m > 0)
-                                {
-                                    if (!Split_stack.empty() 
-                                        && Split_stack.top().ip != _code_ip + 1 
-                                        && Split_stack.top().match_index != _matched_index 
-                                        && Split_stack.top().match_len != _matched_len) 
-                                        Split_stack.push(split_stack_t(_code_ip + 1, _matched_index, _matched_len)); /* REPEND的下一条指令 */
-                                    _code_ip = rs.ip + 1;
-                                    goto __repeat;
-                                }
-                            }
+                            _code_ip = rs.ip + 1;
+                            goto __repeat;
                         }
                         Repeat_stack.pop();
                     }
-                    _code_ip++;
+                    _code_ip++; 
                     break;
                 }
 
