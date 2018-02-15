@@ -467,18 +467,4 @@ bool RE_Parser::parse_square_brace(std::string& s)
     return true;
 }
 
-/* 合并STRING项 */
-inline void RE_Parser::val_push_string_tok(RE_Lexer& _lexer, std::ptrdiff_t _index)
-{
-    if (_lexer.Token.size() >= 2 && _lexer.Token[_index-1] == TOKEN::STRING)
-    {
-        parse_stack_t exp = Parser_Stack.back(); Parser_Stack.pop_back();
-        exp.n++;
-        Parser_Stack.push_back(exp);
-    }
-    else
-        Parser_Stack.push_back(parse_stack_t(TOKEN::STRING, 1, Code.size()));
-}
-
-
 #endif

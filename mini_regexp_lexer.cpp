@@ -46,7 +46,11 @@ void RE_Lexer::lexer(const std::string& regexp, RE_Config& config)
                 {
                     case 'b': Token.push_back(TOKEN::STRING); Text.push_back(" ");  break;
                     case 'd': lexer_special_char("0-9"); break;
+                    case 'D': lexer_special_char("^0-9"); break;
                     case 's': lexer_special_char(" \f\n\r\t\v"); break;
+                    case 'S': lexer_special_char("^ \f\n\r\t\v"); break;
+                    case 'w': lexer_special_char("A-Za-z0-9_"); break;
+                    case 'W': lexer_special_char("^A-Za-z0-9_"); break;
 
                     default:
                         /* 加到string中 */
