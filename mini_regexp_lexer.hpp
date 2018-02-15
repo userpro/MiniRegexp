@@ -23,6 +23,7 @@ namespace mini_regexp_lexer
 
     private:
         void lexer_init();
+        void lexer_special_char(std::string s);
 
     };
 }

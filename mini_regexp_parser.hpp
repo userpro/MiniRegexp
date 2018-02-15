@@ -47,7 +47,6 @@ namespace mini_regexp_parser
         void parser_init();
         void parse_string(RE_Lexer& _lexer);
         void parse_any();
-        void parse_digit();
         void parse_plus();
         bool parse_exp();
         void parse_question();

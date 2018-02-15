@@ -14,7 +14,6 @@ void RE_Lexer::lexer(const std::string& regexp, RE_Config& config)
     {
         switch (regexp[_index])
         {
-            case ' ':  break;
             case '.':  Token.push_back(TOKEN::ANY);       _index++; break;
             case '+':  Token.push_back(TOKEN::PLUS);      _index++; break;
             case '?':  Token.push_back(TOKEN::QUESTION);  _index++; break;
@@ -46,8 +45,8 @@ void RE_Lexer::lexer(const std::string& regexp, RE_Config& config)
                 switch (regexp[_index + 1])
                 {
                     case 'b': Token.push_back(TOKEN::STRING); Text.push_back(" ");  break;
-                    case 'd': Token.push_back(TOKEN::DIGIT); break;
-                    case 's': Token.push_back(TOKEN::SPACE); break;
+                    case 'd': lexer_special_char("0-9"); break;
+                    case 's': lexer_special_char(" \f\n\r\t\v"); break;
 
                     default:
                         /* 加到string中 */
@@ -69,7 +68,7 @@ void RE_Lexer::lexer(const std::string& regexp, RE_Config& config)
                         || is_range_in(regexp[end_pos], 'a', 'z')
                         || is_range_in(regexp[end_pos], 'A', 'Z') 
                         || is_range_in(regexp[end_pos], '0', '9') 
-                        || regexp[end_pos] == '_'))
+                        || regexp[end_pos] == '_' || regexp[end_pos] == ' '))
                     end_pos++;
                 Text.push_back(regexp.substr(start_pos, end_pos - start_pos));
                 Token.push_back(TOKEN::STRING);
@@ -84,6 +83,14 @@ void RE_Lexer::lexer_init()
 {
     Token.clear();
     Text.clear();
+}
+
+inline void RE_Lexer::lexer_special_char(std::string s)
+{
+    Token.push_back(TOKEN::SQUARE_LBRACKET); 
+    Token.push_back(TOKEN::STRING);
+    Token.push_back(TOKEN::SQUARE_RBRACKET);
+    Text.push_back(s);
 }
 
 #endif

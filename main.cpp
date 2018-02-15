@@ -13,6 +13,7 @@ void func(std::vector<std::string>& res)
 
 void test(std::string reg, std::string tar, std::function<void (std::vector<std::string>&)> callback)
 {
+    std::cout << "=======================" << std::endl;
     static mini_regexp regex;
     regex.compile(reg);
     regex.output_code();
@@ -37,5 +38,6 @@ int main()
     test("[abc]*", "aaddab", func);     /* [] */
     test("[^a-dh-mzn]", "axyawczmladddknwdnjkgnoiab", func);   /* [] */
     test("\\d*", "12385567", func);
+    test("a\\s*b", "a  b", func);
     return 0;
 }

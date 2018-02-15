@@ -50,12 +50,6 @@ bool RE_VM::vm(const std::string& target, std::vector<ByteCode>& Code, RE_Config
                             goto __backtrack;
                             break;
 
-                        case TOKEN::SPACE:
-                            if (is_SPACE(target[_matched_index]))
-                                goto __match_ok;
-                            goto __backtrack;
-                            break;
-
                         case TOKEN::BEGIN:
                         {
                             if (_matched_index == 0)

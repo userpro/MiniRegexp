@@ -21,7 +21,6 @@ bool RE_Parser::parser(RE_Lexer& _lexer, RE_Config& config)
         {
             case TOKEN::STRING: parse_string(_lexer); break;
             case TOKEN::ANY:    parse_any();          break; /* '.' */
-            case TOKEN::DIGIT:  parse_digit();        break;
             /* '+' */
             case TOKEN::PLUS:
             {
@@ -120,8 +119,6 @@ void RE_Parser::output_code()
                 switch (exp_t)
                 {
                     case TOKEN::ANY:   std::cout << "  MATCH " << "ANY" << std::endl;   break;
-                    case TOKEN::DIGIT: std::cout << "  MATCH " << "DIGIT" << std::endl; break;
-                    case TOKEN::SPACE: std::cout << "  MATCH " << "SPACE" << std::endl; break;
                     case TOKEN::BEGIN: std::cout << "  MATCH " << "^" << std::endl;     break;
                     case TOKEN::END:   std::cout << "  MATCH " << "$" << std::endl;     break;
                     default:
@@ -167,12 +164,6 @@ inline void RE_Parser::parse_any()
 {
     Parser_Stack.push_back(parse_stack_t(TOKEN::STRING, 1, Code.size()));
     Code.push_back(CODE_ELM(BYTE_CODE::MATCH, TOKEN::ANY, 0)); /* -1 means match any */
-}
-
-inline void RE_Parser::parse_digit()
-{
-    std::string s = "0-9";
-    parse_square_brace(s);
 }
 
 inline void RE_Parser::parse_plus()
@@ -412,21 +403,6 @@ bool RE_Parser::parse_square_brace(std::string& s)
         {
             ins.push_back(CODE_ELM(BYTE_CODE::RANGE, s[_index], s[_index + 2]));
             _index += 3;
-        }
-        /* 处理转义字符 */
-        else if (s[_index] == '\\')
-        {
-            if (_index + 1 < s.length())
-            {
-                switch (s[_index + 1])
-                {
-                    case 'b': ins.push_back(CODE_ELM(BYTE_CODE::RANGE, ' ', ' ')); _index += 2; break;
-                    case 'd': ins.push_back(CODE_ELM(BYTE_CODE::RANGE, '0', '9')); _index += 2; break;
-                    case 's': ins.push_back(CODE_ELM(BYTE_CODE::MATCH, TOKEN::SPACE, 0)); _index += 2; break;
-                    default:
-                        break;
-                }
-            }
         }
         /* 普通匹配一个字符 这里使用RANGE特殊情况 */
         else
