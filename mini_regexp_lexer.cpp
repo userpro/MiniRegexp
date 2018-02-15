@@ -94,7 +94,7 @@ void RE_Lexer::lexer(const std::string& regexp, RE_Config& config)
     }
 }
 
-void RE_Lexer::lexer_init()
+inline void RE_Lexer::lexer_init()
 {
     Token.clear();
     Text.clear();

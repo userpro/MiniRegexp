@@ -24,12 +24,6 @@ bool RE_Parser::parser(RE_Lexer& _lexer, RE_Config& config)
             /* '+' */
             case TOKEN::PLUS:
             {
-                /* 后一位是'?' 开启非贪婪模式 */
-                if (_index + 1 < _len && _lexer.Token[_index + 1] == TOKEN::QUESTION) 
-                {
-                    _index++;
-                    break;
-                }
                 parse_plus();
                 break;
             }
@@ -64,8 +58,6 @@ bool RE_Parser::parser(RE_Lexer& _lexer, RE_Config& config)
             /* '*' */
             case TOKEN::CLOSURE:
             {
-                /* 后面是'?' 开启非贪婪模式 */
-                if (_index + 1 < _len && _lexer.Token[_index + 1] == TOKEN::QUESTION) break;
                 parse_closure();
                 break;
             }
@@ -107,12 +99,10 @@ void RE_Parser::output_code()
             case BYTE_CODE::MATCH:
             {
                 auto exp_t = reinterpret_cast<std::ptrdiff_t>(i.exp1);
-                switch (exp_t)
-                {
-                    case TOKEN::ANY:   std::cout << "  MATCH " << "ANY" << std::endl;   break;
-                    default:
-                        std::cout << "  MATCH " << (std::string)reinterpret_cast<const char*>(exp_t) << std::endl;
-                }
+                if (exp_t == TOKEN::ANY)
+                    std::cout << "  MATCH " << "ANY" << std::endl;
+                else
+                    std::cout << "  MATCH " << (std::string)reinterpret_cast<const char*>(exp_t) << std::endl;
                 
                 break;
             }

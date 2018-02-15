@@ -21,8 +21,8 @@ namespace mini_regexp_token
         RBRACE,     /* '}' */
         EXP,        /* stack parse */
         ANY = -1,   /* '.' */
-        INF = -6,
-        NONE = -7
+        INF = -2,
+        NONE = -3
     };
 
     inline int is_ANY(char c, bool dotall = false)

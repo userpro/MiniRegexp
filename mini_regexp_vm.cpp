@@ -33,27 +33,23 @@ bool RE_VM::vm(const std::string& target, std::vector<ByteCode>& Code, RE_Config
                     /* 匹配超出目标串长度 */
                     if (_matched_index >= _target_len) goto __backtrack;
                     auto exp_t = reinterpret_cast<std::ptrdiff_t>(Code[_code_ip].exp1);
-                    switch (exp_t)
+                    if (exp_t == TOKEN::ANY)
                     {
-                        case TOKEN::ANY:
-                            if (is_ANY(target[_matched_index], config.DOTALL))
-                                goto __match_ok;
-                            goto __backtrack;
-                            break;
-
-                        default:
+                        if (is_ANY(target[_matched_index], config.DOTALL))
+                            goto __match_ok;
+                        goto __backtrack;
+                    }
+                    else
+                    {
+                        std::string s = reinterpret_cast<const char*>(exp_t);
+                        if (target.compare(_matched_index, s.length(), s) == 0)
                         {
-                            std::string s = reinterpret_cast<const char*>(exp_t);
-                            if (target.compare(_matched_index, s.length(), s) == 0)
-                            {
-                                _matched_index += s.length();
-                                _matched_len += s.length();
-                                _code_ip++;
-                                goto __out;
-                            }
-                            goto __backtrack;
-                            break;
+                            _matched_index += s.length();
+                            _matched_len += s.length();
+                            _code_ip++;
+                            goto __out;
                         }
+                        goto __backtrack;
                     }
                     __out:;
                     break;
@@ -114,7 +110,11 @@ bool RE_VM::vm(const std::string& target, std::vector<ByteCode>& Code, RE_Config
                                 /* 最多重复m次 */
                                 if (rs.m > 0)
                                 {
-                                    Split_stack.push(split_stack_t(_code_ip + 1, _matched_index, _matched_len)); /* REPEND的下一条指令 */
+                                    if (!Split_stack.empty() 
+                                        && Split_stack.top().ip != _code_ip + 1 
+                                        && Split_stack.top().match_index != _matched_index 
+                                        && Split_stack.top().match_len != _matched_len) 
+                                        Split_stack.push(split_stack_t(_code_ip + 1, _matched_index, _matched_len)); /* REPEND的下一条指令 */
                                     _code_ip = rs.ip + 1;
                                     goto __repeat;
                                 }
