@@ -22,9 +22,31 @@ bool RE_Parser::parser(RE_Lexer& _lexer, RE_Config& config)
             case TOKEN::STRING: parse_string(_lexer); break;
             case TOKEN::ANY:    parse_any();          break; /* '.' */
             /* '+' */
-            case TOKEN::PLUS: { parse_plus(); break; }
+            case TOKEN::PLUS: 
+            {
+                /* '+' '?' */
+                bool is_greedy = true;
+                if (_index + 1 < _len && _lexer.Token[_index + 1] == TOKEN::QUESTION)
+                {
+                    _index++;
+                    is_greedy = false;
+                }
+                parse_plus(is_greedy); 
+                break; 
+            }
             /* '?' */
-            case TOKEN::QUESTION: { parse_question(); break; }
+            case TOKEN::QUESTION: 
+            {
+                /* '?' '?' */
+                bool is_greedy = true;
+                if (_index + 1 < _len && _lexer.Token[_index + 1] == TOKEN::QUESTION)
+                {
+                    _index++;
+                    is_greedy = false;
+                }
+                parse_question(is_greedy); 
+                break; 
+            }
             /* '[' */
             case TOKEN::SQUARE_LBRACKET:
             {
@@ -38,7 +60,14 @@ bool RE_Parser::parser(RE_Lexer& _lexer, RE_Config& config)
             /* '{' 'string' '}' */
             case TOKEN::LBRACE: 
             {
-                parse_brace(_lexer.Text.back()); 
+                /* '{' '}' '?' */
+                bool is_greedy = true;
+                if (_index + 3 < _len && _lexer.Token[_index + 3] == TOKEN::QUESTION)
+                {
+                    _index++;
+                    is_greedy = false; 
+                }
+                parse_brace(_lexer.Text.back(), is_greedy);
                 _lexer.Text.pop_back();
                 _index += 2;
                 break; 
@@ -52,7 +81,18 @@ bool RE_Parser::parser(RE_Lexer& _lexer, RE_Config& config)
                 break;
 
             /* '*' */
-            case TOKEN::CLOSURE: { parse_closure(); break; }
+            case TOKEN::CLOSURE: 
+            {
+                /* '*' '?' */
+                bool is_greedy = true;
+                if (_index + 1 < _len && _lexer.Token[_index + 1] == TOKEN::QUESTION)
+                {
+                    _index++;
+                    is_greedy = false;
+                }
+                parse_closure(is_greedy); 
+                break; 
+            }
 
             /* '(' */
             case TOKEN::LBRACKET:
@@ -137,7 +177,7 @@ inline void RE_Parser::parse_any()
     Code.push_back(CODE_ELM(BYTE_CODE::MATCH, TOKEN::ANY, 0)); /* -1 means match any */
 }
 
-inline void RE_Parser::parse_plus()
+inline void RE_Parser::parse_plus(bool greedy_mode)
 {
     /*
      * 0 exp
@@ -147,13 +187,15 @@ inline void RE_Parser::parse_plus()
     Parser_Stack.pop_back();
 
     Code.insert(Code.begin() + exp.ip + exp.n, CODE_ELM(BYTE_CODE::SPLIT, -exp.n, 1));
+    if (!greedy_mode)
+        std::swap(Code[exp.ip + exp.n].exp1, Code[exp.ip + exp.n].exp2);
 
     exp.n += 1;
     exp.tk = TOKEN::EXP;
     Parser_Stack.push_back(exp);
 }
 
-inline void RE_Parser::parse_question()
+inline void RE_Parser::parse_question(bool greedy_mode)
 {
     /*
      * 0 split 1,2
@@ -164,13 +206,15 @@ inline void RE_Parser::parse_question()
     Parser_Stack.pop_back();
 
     Code.insert(Code.begin() + exp.ip, CODE_ELM(BYTE_CODE::SPLIT, 1, exp.n + 1));
+    if (!greedy_mode)
+        std::swap(Code[exp.ip].exp1, Code[exp.ip].exp2);
 
     exp.n += 1;
     exp.tk = TOKEN::EXP;
     Parser_Stack.push_back(exp);
 }
 
-inline void RE_Parser::parse_closure()
+inline void RE_Parser::parse_closure(bool greedy_mode)
 {
     /* 
      * 0 split 1 3 
@@ -183,6 +227,11 @@ inline void RE_Parser::parse_closure()
 
     Code.insert(Code.begin() + exp.ip, CODE_ELM(BYTE_CODE::SPLIT, 1, exp.n + 1 + 1));
     Code.insert(Code.begin() + exp.ip + 1 + exp.n, CODE_ELM(BYTE_CODE::SPLIT, -exp.n, 1));
+    if (!greedy_mode)
+    {
+        std::swap(Code[exp.ip].exp1, Code[exp.ip].exp2);
+        std::swap(Code[exp.ip + 1 + exp.n].exp1, Code[exp.ip + 1 + exp.n].exp2);
+    }
 
     exp.n += 2;
     exp.tk = TOKEN::EXP;
@@ -270,7 +319,7 @@ bool RE_Parser::parse_exp()
     return true;
 }
 
-bool RE_Parser::parse_brace(std::string& exp)
+bool RE_Parser::parse_brace(std::string& exp, bool greedy_mode)
 {
     /*
      * 0 repeat n
@@ -312,6 +361,8 @@ bool RE_Parser::parse_brace(std::string& exp)
             m = std::stoi(exp.substr(domma + 1, exp.length() - domma - 1));
             Code[m_ip].exp1 = reinterpret_cast<void*>(m - n);
             Code.insert(Code.begin() + m_ip + 1, CODE_ELM(BYTE_CODE::SPLIT, 1, exp1.n));
+            if (!greedy_mode)
+                std::swap(Code[m_ip + 1].exp1, Code[m_ip + 1].exp2);
             exp1.n += (exp1.n + 1);
         }
         /* {n,}
@@ -325,6 +376,11 @@ bool RE_Parser::parse_brace(std::string& exp)
         {
             Code[m_ip] = CODE_ELM(BYTE_CODE::SPLIT, 1, exp1.n);
             Code[m_ip + exp1.n - 1] = CODE_ELM(BYTE_CODE::SPLIT, -(exp1.n - 2), 1);
+            if (!greedy_mode)
+            {
+                std::swap(Code[m_ip].exp1, Code[m_ip].exp2);
+                std::swap(Code[m_ip + exp1.n - 1].exp1, Code[m_ip + exp1.n - 1].exp2);
+            }
             exp1.n *= 2;
         }
     }

@@ -9,19 +9,19 @@
 #include "mini_regexp_token.hpp"
 #include "mini_regexp_code.hpp"
 #include "mini_regexp_config.hpp"
+#include "mini_regexp_result.hpp"
 
 namespace mini_regexp_vm
 {
     using namespace mini_regexp_token;
     using namespace mini_regexp_code;
     using namespace mini_regexp_config;
+    using namespace mini_regexp_result;
 
     class RE_VM
     {
     public:
-        struct Result {
-            std::vector<std::string> matched;
-        } regex_result;
+        RE_Result regex_result;
 
     private:
         struct split_stack_t
@@ -47,8 +47,8 @@ namespace mini_regexp_vm
         bool vm(const std::string& target, std::vector<ByteCode>& Code, RE_Config& config);
 
     private:
-        inline void vm_init();
-        inline void vm_result_init();
+        void vm_stack_init();
+        void vm_result_init();
         
     };
 }

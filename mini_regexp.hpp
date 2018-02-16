@@ -12,6 +12,7 @@
 #include "mini_regexp_parser.hpp"
 #include "mini_regexp_vm.hpp"
 #include "mini_regexp_config.hpp"
+#include "mini_regexp_result.hpp"
 
 using namespace mini_regexp_code;
 using namespace mini_regexp_token;
@@ -19,13 +20,15 @@ using namespace mini_regexp_lexer;
 using namespace mini_regexp_parser;
 using namespace mini_regexp_vm;
 using namespace mini_regexp_config;
+using namespace mini_regexp_result;
 
 class mini_regexp
 {
 public:
     mini_regexp();
     bool compile(const std::string& regexp_str);
-    bool match(const std::string& match_str, std::function<void(std::vector<std::string>& Result)> callback = nullptr);
+    bool match(const std::string& match_str, 
+        std::function<void(std::vector<std::string>& Result)> callback = nullptr);
     void output_code();
 
 private:
@@ -33,7 +36,7 @@ private:
     RE_Parser mini_parser;
     RE_VM mini_vm;
     RE_Config mini_config;
-    
+
     std::string regexp;
     std::string target;
 

@@ -19,13 +19,14 @@ namespace mini_regexp_lexer
         std::vector<TOKEN> Token; /* lexer */
         std::vector<std::string> Text;  /* TEXT (a|b)* => store a, b */
 
+    private:
+        RE_Keywords mini_keywords;
+
     public:
         RE_Lexer();
         void lexer(const std::string& regexp, RE_Config& config);
 
     private:
-        RE_Keywords mini_keywords;
-
         void lexer_init();
         void lexer_special_char(std::string s);
 

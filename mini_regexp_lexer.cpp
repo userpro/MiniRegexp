@@ -3,6 +3,7 @@
 
 #include "mini_regexp_lexer.hpp"
 using namespace mini_regexp_lexer;
+#include <iostream>
 
 RE_Lexer::RE_Lexer() {}
 
@@ -57,14 +58,14 @@ void RE_Lexer::lexer(const std::string& regexp, RE_Config& config)
             {
                 switch (regexp[_index + 1])
                 {
-                    case 'b': Token.push_back(TOKEN::STRING); Text.push_back(" ");  break;
-                    case 'B': lexer_special_char("^ ");  break;
-                    case 'd': lexer_special_char("0-9"); break;
+                    case 'b': lexer_special_char(" ");    break;
+                    case 'B': lexer_special_char("^ ");   break;
+                    case 'd': lexer_special_char("0-9");  break;
                     case 'D': lexer_special_char("^0-9"); break;
-                    case 's': lexer_special_char(" \f\n\r\t\v"); break;
+                    case 's': lexer_special_char(" \f\n\r\t\v");  break;
                     case 'S': lexer_special_char("^ \f\n\r\t\v"); break;
-                    case 'w': lexer_special_char("A-Za-z0-9_"); break;
-                    case 'W': lexer_special_char("^A-Za-z0-9_"); break;
+                    case 'w': lexer_special_char("A-Za-z0-9_");   break;
+                    case 'W': lexer_special_char("^A-Za-z0-9_");  break;
 
                     default:
                         /* 加到string中 */

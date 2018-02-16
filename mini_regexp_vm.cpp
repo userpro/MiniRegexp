@@ -16,7 +16,7 @@ bool RE_VM::vm(const std::string& target, std::vector<ByteCode>& Code, RE_Config
 
     while (_target_start_pos < _target_len)
     {
-        vm_init();
+        vm_stack_init();
         _code_ip = 0;
         _matched_index = _target_start_pos;
         _matched_len = 0;
@@ -149,7 +149,10 @@ bool RE_VM::vm(const std::string& target, std::vector<ByteCode>& Code, RE_Config
         {
             /* match success */
             if (_matched_len > 0)
+            {
+                regex_result.count++;
                 regex_result.matched.push_back(target.substr(_target_start_pos, _matched_len));
+            }
             else
                 _matched_len = 1;
             _target_start_pos += _matched_len;
@@ -166,7 +169,7 @@ bool RE_VM::vm(const std::string& target, std::vector<ByteCode>& Code, RE_Config
     return false;
 }
 
-inline void RE_VM::vm_init()
+inline void RE_VM::vm_stack_init()
 {
     while (!Split_stack.empty()) Split_stack.pop();
     while (!Repeat_stack.empty()) Repeat_stack.pop();
@@ -174,6 +177,7 @@ inline void RE_VM::vm_init()
 
 inline void RE_VM::vm_result_init()
 {
+    regex_result.count = 0;
     regex_result.matched.clear();
 }
 

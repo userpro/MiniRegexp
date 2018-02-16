@@ -47,14 +47,12 @@ namespace mini_regexp_parser
         void parser_init();
         void parse_string(RE_Lexer& _lexer);
         void parse_any();
-        void parse_plus();
         bool parse_exp();
-        void parse_question();
-        void parse_closure();
-        
-        bool parse_brace(std::string& exp);
+        void parse_plus(bool greedy_mode = true);
+        void parse_question(bool greedy_mode = true);
+        void parse_closure(bool greedy_mode = true);
+        bool parse_brace(std::string& exp, bool greedy_mode = true);
         bool parse_square_brace(std::string& exp);
-
     };
 }
 #endif
