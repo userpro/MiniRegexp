@@ -40,5 +40,6 @@ int main()
     test("a.*b", "aaabaab", func);
     test("^[0-9]*[1-9][0-9]*", "2sd134\n123sd2", func);
     test("a{3,}b{1,2}d{1,22}e{11,12}f{1}", "aaaabbddeeeeeeeeeeeff", func);
+    test("^([a-zA-Z0-9_\\-\\.]+)@((\\[[0-9]{1,3}\\.[0-9]{1,3}\\.[0-9]{1,3}\\.)|(([a-zA-Z0-9\\-]+\\.)+))([a-zA-Z]{2,4}|[0-9]{1,3})(\\]?)$", "john@johnmaddock.co.uk", func);
     return 0;
 }

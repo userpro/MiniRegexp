@@ -22,22 +22,12 @@ bool RE_Parser::parser(RE_Lexer& _lexer, RE_Config& config)
             case TOKEN::STRING: parse_string(_lexer); break;
             case TOKEN::ANY:    parse_any();          break; /* '.' */
             /* '+' */
-            case TOKEN::PLUS:
-            {
-                parse_plus();
-                break;
-            }
+            case TOKEN::PLUS: { parse_plus(); break; }
             /* '?' */
             case TOKEN::QUESTION: { parse_question(); break; }
             /* '[' */
             case TOKEN::SQUARE_LBRACKET:
             {
-                if (_lexer.Token[_index + 2] != TOKEN::SQUARE_RBRACKET 
-                    && _lexer.Token[_index + 1] == TOKEN::STRING)
-                {
-                    std::cout << "mismatch SQUARE_BRACKET." << std::endl;
-                    return false;
-                }
                 parse_square_brace(_lexer.Text.back());
                 _lexer.Text.pop_back();
                 _index += 2;
@@ -62,11 +52,7 @@ bool RE_Parser::parser(RE_Lexer& _lexer, RE_Config& config)
                 break;
 
             /* '*' */
-            case TOKEN::CLOSURE:
-            {
-                parse_closure();
-                break;
-            }
+            case TOKEN::CLOSURE: { parse_closure(); break; }
 
             /* '(' */
             case TOKEN::LBRACKET:

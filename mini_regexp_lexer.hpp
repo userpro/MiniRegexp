@@ -5,11 +5,13 @@
 #include <vector>
 #include "mini_regexp_token.hpp"
 #include "mini_regexp_config.hpp"
+#include "mini_regexp_keywords.hpp"
 
 namespace mini_regexp_lexer
 {
     using namespace mini_regexp_token;
     using namespace mini_regexp_config;
+    using namespace mini_regexp_keywords;
 
     class RE_Lexer
     {
@@ -22,6 +24,8 @@ namespace mini_regexp_lexer
         void lexer(const std::string& regexp, RE_Config& config);
 
     private:
+        RE_Keywords mini_keywords;
+
         void lexer_init();
         void lexer_special_char(std::string s);
 

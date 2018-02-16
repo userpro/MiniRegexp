@@ -38,8 +38,8 @@ void RE_Lexer::lexer(const std::string& regexp, RE_Config& config)
                 break;
             
             case '$':
-                if (config.MULTILINE) lexer_special_char("\2\n\r"); 
-                else lexer_special_char("\2"); 
+                if (config.MULTILINE) lexer_special_char("\3\n\r"); 
+                else lexer_special_char("\3"); 
                 _index++;
                 break;
 
@@ -68,7 +68,7 @@ void RE_Lexer::lexer(const std::string& regexp, RE_Config& config)
 
                     default:
                         /* 加到string中 */
-                        Text.push_back(regexp.substr(_index, 2));
+                        Text.push_back(regexp.substr(_index + 1, 1));
                         Token.push_back(TOKEN::STRING);
                         break;
 
@@ -80,13 +80,7 @@ void RE_Lexer::lexer(const std::string& regexp, RE_Config& config)
             default:
             {
                 unsigned int start_pos = _index, end_pos = _index;
-                while (end_pos < _len 
-                    && 
-                    (is_escape_char(regexp[end_pos])
-                        || is_range_in(regexp[end_pos], 'a', 'z')
-                        || is_range_in(regexp[end_pos], 'A', 'Z') 
-                        || is_range_in(regexp[end_pos], '0', '9') 
-                        || regexp[end_pos] == '_' || regexp[end_pos] == ' '))
+                while (end_pos < _len && !mini_keywords.is_keyword(regexp[end_pos]))
                     end_pos++;
                 Text.push_back(regexp.substr(start_pos, end_pos - start_pos));
                 Token.push_back(TOKEN::STRING);
