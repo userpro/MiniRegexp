@@ -47,6 +47,7 @@ bool RE_Parser::parser(RE_Lexer& _lexer, RE_Config& config)
                 parse_question(is_greedy); 
                 break; 
             }
+
             /* '[' */
             case TOKEN::SQUARE_LBRACKET:
             {
@@ -57,6 +58,7 @@ bool RE_Parser::parser(RE_Lexer& _lexer, RE_Config& config)
             }
             /* ']' */
             case TOKEN::SQUARE_RBRACKET: break;
+
             /* '{' 'string' '}' */
             case TOKEN::LBRACE: 
             {
@@ -74,6 +76,7 @@ bool RE_Parser::parser(RE_Lexer& _lexer, RE_Config& config)
             }
             /* '}' */
             case TOKEN::RBRACE: break;
+
             /* '|' */
             case TOKEN::OR:
                 /* OR 延后处理 */
@@ -96,19 +99,18 @@ bool RE_Parser::parser(RE_Lexer& _lexer, RE_Config& config)
 
             /* '(' */
             case TOKEN::LBRACKET:
+                Parser_Stack.push_back(parse_stack_t(TOKEN::LBRACKET, 1, Code.size()));
                 Code.push_back(CODE_ELM(BYTE_CODE::ENTER, 0, 0));
-                Parser_Stack.push_back(parse_stack_t(TOKEN::LBRACKET, 0, -1));
                 break;
 
             /* ')' */
             case TOKEN::RBRACKET: 
             {
-                parse_exp(); 
+                parse_exp();
                 Code.push_back(CODE_ELM(BYTE_CODE::LEAVE, 0, 0));
                 break; 
             }
             case TOKEN::EXP: break;
-
             default:
                 std::cout << "parse: err." << std::endl;
                 return false;
@@ -317,15 +319,17 @@ bool RE_Parser::parse_exp()
 
             or_op.tk = TOKEN::EXP;
             or_op.n += (l_exp.n + r_exp.n + 2);
-            Parser_Stack.push_back(or_op);            
+            Parser_Stack.push_back(or_op);
         }
     }
     /* ( EXP */
-    if (Parser_Stack.size() > 2)
+    if (Parser_Stack.size() >= 2)
     {
         parse_stack_t exp = Parser_Stack.back(); 
         Parser_Stack.pop_back(); /* EXP */
+        exp.ip = Parser_Stack.back().ip;
         Parser_Stack.pop_back(); /* ( */
+        exp.n += 2;
         Parser_Stack.push_back(exp);
     }
 

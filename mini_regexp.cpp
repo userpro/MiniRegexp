@@ -17,12 +17,13 @@ bool mini_regexp::compile(const std::string& regexp_str)
 }
 
 
-bool mini_regexp::match(const std::string& match_str, std::function<void(std::vector<std::string>&)> callback)
+bool mini_regexp::match(const std::string& match_str, 
+    std::function<void(std::vector<std::string>&, std::vector<std::string>&)> callback)
 {
     bool flag = false;
     target = "\2" + match_str + "\3";
     mini_vm.vm(target, mini_parser.Code, mini_config);
-    if (callback) callback(mini_vm.regex_result.matched);
+    if (callback) callback(mini_vm.regex_result.get_matched(), mini_vm.regex_result.get_sub_matched());
     return flag;
 }
 

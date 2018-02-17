@@ -20,10 +20,10 @@ namespace mini_regexp_token
         RBRACE,     /* '}' */
         EXP,        /* stack parse */
         ANY = -1,   /* '.' */
-        INF = -2,
-        NONE = -3
+        INF = -2,   /* {n, m} -> m */
+        NONE = -3,  /* {n, m} -> m */
+        GROUP = -4, /* \1 \2 ... etc */
     };
-
 }
 
 #endif

@@ -3,15 +3,20 @@
 #include <string>
 #include "mini_regexp.hpp"
 
-void func(std::vector<std::string>& res)
+void func(std::vector<std::string>& matched, std::vector<std::string>& sub_matched)
 {
-    std::cout << "Result: " << std::endl;
-    for (auto i : res)
+    std::cout << "Matched: " << std::endl;
+    for (auto i : matched)
+        std::cout << "  " << i;
+    std::cout << std::endl;
+    
+    std::cout << "Sub Matched: " << std::endl;
+    for (auto i : sub_matched)
         std::cout << "  " << i;
     std::cout << std::endl;
 }
 
-void test(std::string reg, std::string tar, std::function<void (std::vector<std::string>&)> callback)
+void test(std::string reg, std::string tar, std::function<void (std::vector<std::string>&, std::vector<std::string>&)> callback)
 {
     std::cout << "=======================" << std::endl;
     static mini_regexp regex;
@@ -45,5 +50,6 @@ int main()
     // test("a*?", "aaba", func); /* *?懒惰模式 */
     // test("a+?", "aaaaa", func); /* +?懒惰模式 */
     // test("a??", "aaaaa", func); /* ??懒惰模式 */    
+    test("(ab)*cd", "aaabcd", func);
     return 0;
 }

@@ -18,7 +18,7 @@ namespace mini_regexp_result
             return count;
         }
 
-        std::vector<std::string>& get_submatched()
+        std::vector<std::string>& get_sub_matched()
         {
             return sub_matched;
         }

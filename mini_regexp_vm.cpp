@@ -2,7 +2,9 @@
 #define MINI_REGEXP_VM_CPP_
 
 #include "mini_regexp_vm.hpp"
+#include "mini_regexp_common.hpp"
 using namespace mini_regexp_vm;
+using namespace mini_regexp_common;
 
 RE_VM::RE_VM() {}
 
@@ -97,10 +99,14 @@ bool RE_VM::vm(const std::string& target, std::vector<ByteCode>& Code, RE_Config
                 }
 
                 case BYTE_CODE::ENTER:
+                    _sub_matched_start = _matched_index;
                     _code_ip++;
                     break;
 
                 case BYTE_CODE::LEAVE:
+                    _sub_matched_len = _matched_index - _sub_matched_start;
+                    regex_result.sub_matched.push_back(target.substr(_sub_matched_start, _sub_matched_len));
+                    _sub_matched_start = _sub_matched_len = 0;
                     _code_ip++;
                     break;
 
@@ -192,6 +198,7 @@ inline void RE_VM::vm_stack_init()
 inline void RE_VM::vm_result_init()
 {
     regex_result.count = 0;
+    regex_result.sub_matched.clear();
     regex_result.matched.clear();
 }
 

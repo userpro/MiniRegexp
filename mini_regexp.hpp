@@ -28,7 +28,7 @@ public:
     mini_regexp();
     bool compile(const std::string& regexp_str);
     bool match(const std::string& match_str, 
-        std::function<void(std::vector<std::string>& Result)> callback = nullptr);
+        std::function<void(std::vector<std::string>&, std::vector<std::string>&)> callback = nullptr);
     void output_code();
 
 private:
