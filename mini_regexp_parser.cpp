@@ -96,11 +96,17 @@ bool RE_Parser::parser(RE_Lexer& _lexer, RE_Config& config)
 
             /* '(' */
             case TOKEN::LBRACKET:
+                Code.push_back(CODE_ELM(BYTE_CODE::ENTER, 0, 0));
                 Parser_Stack.push_back(parse_stack_t(TOKEN::LBRACKET, 0, -1));
                 break;
 
             /* ')' */
-            case TOKEN::RBRACKET: { parse_exp(); break; }
+            case TOKEN::RBRACKET: 
+            {
+                parse_exp(); 
+                Code.push_back(CODE_ELM(BYTE_CODE::LEAVE, 0, 0));
+                break; 
+            }
             case TOKEN::EXP: break;
 
             default:
@@ -119,6 +125,7 @@ bool RE_Parser::parser(RE_Lexer& _lexer, RE_Config& config)
 
 void RE_Parser::output_code()
 {
+    std::cout << "Code Length: " << Code.size() << std::endl;
     std::cout << "Generate Code: " << std::endl;
     for (auto i : Code)
     {
@@ -149,6 +156,12 @@ void RE_Parser::output_code()
             case BYTE_CODE::REPEND: std::cout << "  REPEND" << std::endl;  break;
             case BYTE_CODE::REPEAT: 
                 std::cout << "  REPEAT " << reinterpret_cast<std::ptrdiff_t>(i.exp1) << std::endl;
+                break;
+            case BYTE_CODE::ENTER:
+                std::cout << "  ENTER " << std::endl;
+                break;
+            case BYTE_CODE::LEAVE:
+                std::cout << "  LEAVE " << std::endl;
                 break;
             default:
                 std::cout << "  unknown unknown unknown" << std::endl;

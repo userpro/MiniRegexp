@@ -11,6 +11,8 @@ namespace mini_regexp_code
         JMP,    /* jmp addr */
         REPEAT, /* repeat n */
         REPEND, /* repend */
+        ENTER,  /* ( */
+        LEAVE,  /* ) */
         RANGE,  /* range _start, _end(_start < c < _end) */
         ACCEPT,
     };
@@ -22,5 +24,15 @@ namespace mini_regexp_code
         ByteCode():op(BYTE_CODE::HALT),exp1(0),exp2(0) {}
         ByteCode(BYTE_CODE _op, void *_exp1, void *_exp2):exp1(_exp1),exp2(_exp2),op(_op) {}
     };
+
+    inline int is_ANY(char c, bool dotall = false)
+    {
+        return dotall ? 1 : !!(c != '\n');
+    }
+
+    inline int is_range_in(char c, char start, char end)
+    {
+        return (c - start >= 0 && end - c >= 0);
+    }
 }
 #endif

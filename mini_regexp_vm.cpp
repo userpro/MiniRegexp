@@ -11,7 +11,8 @@ bool RE_VM::vm(const std::string& target, std::vector<ByteCode>& Code, RE_Config
     vm_result_init();
     std::ptrdiff_t _code_ip = 0, _code_len = Code.size();
     std::ptrdiff_t _target_start_pos = 0, _target_len = target.length();
-    std::ptrdiff_t _matched_index = 0, _matched_len = 0;
+    std::ptrdiff_t _matched_index = 0, _matched_len = 0,
+                   _sub_matched_start = 0, _sub_matched_len = 0;
     bool is_accept = false;
 
     while (_target_start_pos < _target_len)
@@ -20,6 +21,7 @@ bool RE_VM::vm(const std::string& target, std::vector<ByteCode>& Code, RE_Config
         _code_ip = 0;
         _matched_index = _target_start_pos;
         _matched_len = 0;
+        _sub_matched_start = _sub_matched_len = 0;
         is_accept = false;
 
         __repeat:;
@@ -66,7 +68,9 @@ bool RE_VM::vm(const std::string& target, std::vector<ByteCode>& Code, RE_Config
                         goto __next_loop;
                     }
                     /* 默认选exp1分支 执行失败则进入exp2分支 */
-                    Split_stack.push(split_stack_t(_code_ip + exp2, _matched_index, _matched_len));
+                    Split_stack.push(split_stack_t(_code_ip + exp2,
+                                                   _matched_index, _matched_len,
+                                                   _sub_matched_start, _sub_matched_len));
                     _code_ip += exp1;
                     break;
                 }
@@ -91,6 +95,14 @@ bool RE_VM::vm(const std::string& target, std::vector<ByteCode>& Code, RE_Config
                     _code_ip++; 
                     break;
                 }
+
+                case BYTE_CODE::ENTER:
+                    _code_ip++;
+                    break;
+
+                case BYTE_CODE::LEAVE:
+                    _code_ip++;
+                    break;
 
                 case BYTE_CODE::RANGE:
                 {
@@ -137,6 +149,8 @@ bool RE_VM::vm(const std::string& target, std::vector<ByteCode>& Code, RE_Config
                 _code_ip = Split_stack.top().ip;
                 _matched_index = Split_stack.top().match_index;
                 _matched_len   = Split_stack.top().match_len;
+                _sub_matched_start = Split_stack.top().sub_match_start;
+                _sub_matched_len = Split_stack.top().sub_match_len;
                 Split_stack.pop();
             } else {
                 goto __next_loop;

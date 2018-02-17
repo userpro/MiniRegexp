@@ -28,8 +28,10 @@ namespace mini_regexp_vm
         {
             std::ptrdiff_t ip;
             std::ptrdiff_t match_index, match_len;
-            split_stack_t():ip(-1),match_index(-1),match_len(0) {}
-            split_stack_t(std::ptrdiff_t _ip, std::ptrdiff_t _index, std::ptrdiff_t _len):ip(_ip),match_index(_index),match_len(_len) {}
+            std::ptrdiff_t sub_match_start, sub_match_len;
+            split_stack_t():ip(-1),match_index(-1),match_len(0),sub_match_start(0), sub_match_len(0) {}
+            split_stack_t(std::ptrdiff_t _ip, std::ptrdiff_t _index, std::ptrdiff_t _len, std::ptrdiff_t _sub_match_start, std::ptrdiff_t _sub_match_len)
+                :ip(_ip),match_index(_index),match_len(_len),sub_match_start(_sub_match_start),sub_match_len(_sub_match_len) {}
         };
 
         struct repeat_stack_t
