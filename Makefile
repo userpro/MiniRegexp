@@ -14,6 +14,10 @@ example:
 	$(CC) $(CC_FLAGS) $(SOURCES_EXAMPLE) -o $(OUTPUT_EXAMPLE)
 	./$(OUTPUT_EXAMPLE)
 
+# profile:
+# 	$(CC) $(CC_FLAGS) -pg -o a.out $(SOURCES_RUN) && ./$(OUTPUT_RUN)
+# 	gcov $(SOURCES_RUN) > main_profile
+
 .PHONY: clean
 clean:
 	rm *.out

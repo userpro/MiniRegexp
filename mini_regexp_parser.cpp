@@ -11,7 +11,6 @@ bool RE_Parser::parser(RE_Lexer& _lexer, RE_Config& config)
 {
     parser_init();
 
-    bool _begin = false, _end = false;
     std::ptrdiff_t _index = 0, _len = _lexer.Token.size();
     std::reverse(_lexer.Text.begin(), _lexer.Text.end());
 
@@ -110,6 +109,11 @@ bool RE_Parser::parser(RE_Lexer& _lexer, RE_Config& config)
                 Code.push_back(CODE_ELM(BYTE_CODE::LEAVE, 0, 0));
                 break; 
             }
+
+            case TOKEN::GROUP:
+                parse_group(_lexer);
+                break;
+
             case TOKEN::EXP: break;
             default:
                 std::cout << "parse: err." << std::endl;
@@ -142,6 +146,8 @@ void RE_Parser::output_code()
                 auto exp_t = reinterpret_cast<std::ptrdiff_t>(i.exp1);
                 if (exp_t == TOKEN::ANY)
                     std::cout << "  MATCH " << "ANY" << std::endl;
+                else if (exp_t == TOKEN::GROUP)
+                    std::cout << "  MATCH " << "GROUP, " << reinterpret_cast<std::ptrdiff_t>(i.exp2) << std::endl;
                 else
                     std::cout << "  MATCH " << (std::string)reinterpret_cast<const char*>(exp_t) << std::endl;
                 
@@ -234,7 +240,7 @@ inline void RE_Parser::parse_closure(bool greedy_mode)
     /* 
      * 0 split 1 3 
      * 1 exp(pst)
-     * 2 split -1 3
+     * 2 split -1 1
      * 3 do...
      */
     parse_stack_t exp = Parser_Stack.back(); 
@@ -492,6 +498,13 @@ bool RE_Parser::parse_square_brace(std::string& s)
 
     Parser_Stack.push_back(exp);
     return true;
+}
+
+inline void RE_Parser::parse_group(RE_Lexer& _lexer)
+{
+    Parser_Stack.push_back(parse_stack_t(TOKEN::STRING, 1, Code.size()));
+    Code.push_back(CODE_ELM(BYTE_CODE::MATCH, TOKEN::GROUP, str2int(_lexer.Text.back())));
+    _lexer.Text.pop_back();
 }
 
 #endif

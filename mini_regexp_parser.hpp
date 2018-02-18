@@ -8,6 +8,7 @@
 #include "mini_regexp_lexer.hpp"
 #include "mini_regexp_code.hpp"
 #include "mini_regexp_config.hpp"
+#include "mini_regexp_common.hpp"
 
 #define CODE_ELM(a,b,c) ByteCode(a, reinterpret_cast<void*>(b), reinterpret_cast<void*>(c))
 
@@ -17,6 +18,7 @@ namespace mini_regexp_parser
     using namespace mini_regexp_token;
     using namespace mini_regexp_code;
     using namespace mini_regexp_config;
+    using namespace mini_regexp_common;
 
     class RE_Parser
     {
@@ -53,6 +55,7 @@ namespace mini_regexp_parser
         void parse_closure(bool greedy_mode = true);
         bool parse_brace(std::string& exp, bool greedy_mode = true);
         bool parse_square_brace(std::string& exp);
+        void parse_group(RE_Lexer& _lexer);
     };
 }
 #endif

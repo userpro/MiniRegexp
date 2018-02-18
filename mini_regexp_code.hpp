@@ -22,7 +22,7 @@ namespace mini_regexp_code
         BYTE_CODE op;
         void *exp1, *exp2;
         ByteCode():op(BYTE_CODE::HALT),exp1(0),exp2(0) {}
-        ByteCode(BYTE_CODE _op, void *_exp1, void *_exp2):exp1(_exp1),exp2(_exp2),op(_op) {}
+        ByteCode(BYTE_CODE _op, void *_exp1, void *_exp2):op(_op),exp1(_exp1),exp2(_exp2) {}
     };
 }
 #endif

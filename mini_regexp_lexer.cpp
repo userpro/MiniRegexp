@@ -103,19 +103,30 @@ std::ptrdiff_t RE_Lexer::lexer_special_char(const std::string& regexp, std::ptrd
     }
     else
     {
+        std::string num;
         switch (spec_ch)
         {
             /* 十进制或者八进制 */
-            case'0':case'1':case'2':case'3':case'4':case'5':case'6':case'7':case'8':case'9':
+            case'0':case'1':case'2':case'3':case'4':
+            case'5':case'6':case'7':case'8':case'9':
+                _index = lexer_get_digit(regexp, num, _index + 1);
+                Text.push_back(num);
+                Token.push_back(TOKEN::GROUP);
+                break;
+            case 'x': /* 16进制 */
+            {
+                _index = lexer_get_digit(regexp, num, _index + 2);
+                std::string s;
+                Text.push_back(s + char(str2hex(num)));
+                Token.push_back(TOKEN::STRING);
+                break;
+            }
+
+            case 'u': /* Unicode */
+                _index = lexer_get_digit(regexp, num, _index + 2);
+                //...
                 break;
 
-            /* 16进制 */
-            case 'x':
-                break;
-
-            /* Unicode */
-            case 'u':
-                break;
             default:
                 /* 加到string中 */
                 Text.push_back(regexp.substr(_index + 1, 1));
@@ -128,9 +139,13 @@ std::ptrdiff_t RE_Lexer::lexer_special_char(const std::string& regexp, std::ptrd
 }
 
 
-inline std::ptrdiff_t RE_Lexer::lexer_get_digit(const std::string& regexp, char& num, std::ptrdiff_t _index)
+inline std::ptrdiff_t RE_Lexer::lexer_get_digit(const std::string& regexp, std::string& num, std::ptrdiff_t _index)
 {
-    return _index - 1;
+    auto _start = _index;
+    while (is_range_in(regexp[_index++], '0', '9'))
+        ;
+    num = regexp.substr(_start, _index - _start);
+    return _index;
 }
 
 inline std::ptrdiff_t RE_Lexer::get_close_exp(const std::string& regexp, std::ptrdiff_t _index, char _end)

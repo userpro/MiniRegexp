@@ -1,6 +1,7 @@
 #include <iostream>
 #include <vector>
 #include <string>
+#include <ctime>
 #include "mini_regexp.hpp"
 
 void func(std::vector<std::string>& matched, std::vector<std::string>& sub_matched)
@@ -29,11 +30,14 @@ void test(std::string reg, std::string tar, std::function<void (std::vector<std:
 
 int main()
 {
-    test("a(c|b|o\\d)*.", "daccaaafao0da ac1cgg", func); /* () | * \d */
+    clock_t t;
+    t = clock();
+
+    // test("a(c|b|o\\d)*.", "daccaaafao0da ac1cgg", func); /* () | * \d */
     // test("\\bworld.", "world world1", func); /* \b */
     // test("\\\\a", "wf\\asxc", func);
-    test("do(es)+", "doesng", func); /* () */
-    test("(a|b){1,2}", "abbb", func);
+    // test("do(es)+", "doesng", func); /* () */
+    // test("(a|b){1,2}", "abbb", func);
     // test("o+?", "oooo", func); /* ?(非)贪婪 */
     // test("a(o*?)d", "aoood", func); /* ?(非)贪婪 */
     // test("^abc", "abcabc", func); /* START */
@@ -45,11 +49,17 @@ int main()
     // test("a.*b", "aaabaab", func);
     // test("^[0-9]*[1-9][0-9]*", "2sd134\n123sd2", func);
     // test("a{3,}b{1,2}d{1,22}e{11,12}f{1}", "aaaabbddeeeeeeeeeeeff", func);
-    test("^([a-zA-Z0-9_\\-\\.]+)@((\\[[0-9]{1,3}\\.[0-9]{1,3}\\.[0-9]{1,3}\\.)|(([a-zA-Z0-9\\-]+\\.)+))([a-zA-Z]{2,4}|[0-9]{1,3})(\\]?)$", "john@johnmaddock.co.uk", func);
+    // test("^([a-zA-Z0-9_\\-\\.]+)@((\\[[0-9]{1,3}\\.[0-9]{1,3}\\.[0-9]{1,3}\\.)|(([a-zA-Z0-9\\-]+\\.)+))([a-zA-Z]{2,4}|[0-9]{1,3})(\\]?)$", "john@johnmaddock.co.uk", func);
     // test("a{2,}?", "aaaaaaa", func); /* {}?懒惰模式 */
     // test("a*?", "aaba", func); /* *?懒惰模式 */
     // test("a+?", "aaaaa", func); /* +?懒惰模式 */
     // test("a??", "aaaaa", func); /* ??懒惰模式 */    
     test("(ab)*cd", "aaabcd", func);
+    test("(2)\\1", "22222", func);
+    /* ERROR empty loop! dead loop! */
+    // test("(a*)*", "aaaaaaaaaaaaaaaaaaaaaaaaaaaab", func);
+
+    t = clock() - t;
+    std::cout << "It cost " << t << " clicks (" << ((float)t)*1000/CLOCKS_PER_SEC << " ms)." << std::endl;
     return 0;
 }
