@@ -2,6 +2,7 @@
 #define MINI_REGEXP_COMMON_H_
 
 #include <string>
+#include <algorithm>
 
 namespace mini_regexp_common
 {
@@ -20,14 +21,29 @@ namespace mini_regexp_common
         return std::stoll(s);
     }
 
+    inline std::ptrdiff_t __str2hex(char c)
+    {
+        if (is_range_in(c, 'a', 'z'))
+            return c - 'a' + 10;
+        else
+            return c - '0';
+    }
+
     inline std::ptrdiff_t str2hex(std::string& s)
     {
-        return 0;
+        std::transform(s.begin(), s.end(), s.begin(), ::tolower);
+        std::ptrdiff_t num = 0;
+        for (int i = 0; i < s.length(); ++i)
+            num = num * 16 + __str2hex(s[i]);
+        return num;
     }
 
     inline std::ptrdiff_t str2oct(std::string& s)
     {
-        return 0;
+        std::ptrdiff_t num = 0;
+        for (int i = 0; i < s.length(); i++)
+            num = num * 8 + s[i] - '0';
+        return num;
     }
 }
 

@@ -166,6 +166,7 @@ inline bool RE_VM::vm_match(const std::string& target,
     else if (exp_t == TOKEN::GROUP)
     {
         auto group_number = reinterpret_cast<std::ptrdiff_t>(Code[_code_ip].exp2);
+        /* Group */
         if (regex_result.sub_matched.size() > group_number - 1)
         {
             std::string& tmp = regex_result.sub_matched[group_number - 1];
@@ -176,7 +177,10 @@ inline bool RE_VM::vm_match(const std::string& target,
         /* 八进制转义字符 */
         else
         {
+            /* 不打算做了 真的烦 哼(ノ=Д=)ノ┻━┻ */
+            /* \n \nm \nml */
             auto n = std::to_string(group_number);
+            std::cout << "Not implement!" << std::endl;
         }
     }
     /* normal string */

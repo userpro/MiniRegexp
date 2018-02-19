@@ -66,6 +66,7 @@ int main()
         {"(ab)*cd"      , "aaabcd"              },
         {"(2)(2)\\1\\2" , "22222"               },
         {"\\d{1,3}\\.\\d{1,3}\\.\\d{1,3}\\.\\d{1,3}", "192.168.0.255"},
+        {"\\u00a9\\x41\\010111"    , "©AA11"       },
 
         /* ERROR empty loop! dead loop! */
         // {"(a*)*"        , "aaaaaaaaaaaaaaaaaaaaaaaaaaaab"},

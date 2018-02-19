@@ -33,7 +33,6 @@ namespace mini_regexp_keywords
             KEYWORDS_NORMAL_TOKEN['?'] = TOKEN::QUESTION;
             KEYWORDS_NORMAL_TOKEN['*'] = TOKEN::CLOSURE;
             KEYWORDS_NORMAL_TOKEN['|'] = TOKEN::OR;
-            KEYWORDS_NORMAL_TOKEN['('] = TOKEN::LBRACKET;
             KEYWORDS_NORMAL_TOKEN[')'] = TOKEN::RBRACKET;
             KEYWORDS_NORMAL_TOKEN[','] = TOKEN::COMMA;
             KEYWORDS_NORMAL_TOKEN['}'] = TOKEN::RBRACE;
