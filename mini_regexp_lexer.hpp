@@ -35,7 +35,7 @@ namespace mini_regexp_lexer
         void lexer_predefined_char(std::string s);
         std::ptrdiff_t lexer_get_digit(const std::string& regexp, std::string& num, std::ptrdiff_t _index);
         std::ptrdiff_t lexer_special_char(const std::string& regexp, std::ptrdiff_t _index);
-        std::ptrdiff_t get_close_exp(const std::string& regexp, std::ptrdiff_t _index, char _end);
+        std::ptrdiff_t lexer_get_close_exp(const std::string& regexp, std::ptrdiff_t _index, char _end);
 
     };
 }

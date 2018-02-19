@@ -60,14 +60,14 @@ inline std::ptrdiff_t RE_Lexer::lexer_special_token(const std::string& regexp, s
         case '{':
         {
             Token.push_back(TOKEN::LBRACE);
-            _index = get_close_exp(regexp, _index, '}');
+            _index = lexer_get_close_exp(regexp, _index, '}');
             break;
         }
 
         case '[':  
         {
             Token.push_back(TOKEN::SQUARE_LBRACKET);
-            _index = get_close_exp(regexp, _index, ']');
+            _index = lexer_get_close_exp(regexp, _index, ']');
             break;
         }
 
@@ -148,7 +148,7 @@ inline std::ptrdiff_t RE_Lexer::lexer_get_digit(const std::string& regexp, std::
     return _index;
 }
 
-inline std::ptrdiff_t RE_Lexer::get_close_exp(const std::string& regexp, std::ptrdiff_t _index, char _end)
+inline std::ptrdiff_t RE_Lexer::lexer_get_close_exp(const std::string& regexp, std::ptrdiff_t _index, char _end)
 {
     auto st = _index + 1, ed = _index;
     while (regexp[++ed] != _end);
