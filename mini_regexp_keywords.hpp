@@ -18,7 +18,7 @@ namespace mini_regexp_keywords
         /* 正则(简单操作)关键词到TOKEN转换数组 */
         TOKEN KEYWORDS_NORMAL_TOKEN[0xff];
         /* 正则预定义转义字符 */
-        std::string REGEXP_SPECIAL_CHAR[0xff];
+        std::string REGEXP_ESCAPE_CHAR[0xff];
 
     public:
         RE_Keywords()
@@ -39,14 +39,14 @@ namespace mini_regexp_keywords
             KEYWORDS_NORMAL_TOKEN[']'] = TOKEN::SQUARE_RBRACKET;
 
             /* 默认'[' ']' */
-            REGEXP_SPECIAL_CHAR['b'] = " ";
-            REGEXP_SPECIAL_CHAR['B'] = "^ ";
-            REGEXP_SPECIAL_CHAR['d'] = "0-9";
-            REGEXP_SPECIAL_CHAR['D'] = "^0-9";
-            REGEXP_SPECIAL_CHAR['s'] = " \f\n\r\t\v";
-            REGEXP_SPECIAL_CHAR['S'] = "^ \f\n\r\t\v";
-            REGEXP_SPECIAL_CHAR['w'] = "A-Za-z0-9_";
-            REGEXP_SPECIAL_CHAR['W'] = "^A-Za-z0-9_";
+            REGEXP_ESCAPE_CHAR['b'] = " ";
+            REGEXP_ESCAPE_CHAR['B'] = "^ ";
+            REGEXP_ESCAPE_CHAR['d'] = "0-9";
+            REGEXP_ESCAPE_CHAR['D'] = "^0-9";
+            REGEXP_ESCAPE_CHAR['s'] = " \f\n\r\t\v";
+            REGEXP_ESCAPE_CHAR['S'] = "^ \f\n\r\t\v";
+            REGEXP_ESCAPE_CHAR['w'] = "A-Za-z0-9_";
+            REGEXP_ESCAPE_CHAR['W'] = "^A-Za-z0-9_";
         }
 
         bool is_keyword(char c)
@@ -64,14 +64,14 @@ namespace mini_regexp_keywords
             return KEYWORDS_NORMAL_TOKEN[c];
         }
 
-        bool is_special_char(char c)
+        bool is_escape_char(char c)
         {
-            return REGEXP_SPECIAL_CHAR[c].length() != 0;
+            return REGEXP_ESCAPE_CHAR[c].length() != 0;
         }
 
-        std::string& get_special_char(char c)
+        std::string& get_escape_char(char c)
         {
-            return REGEXP_SPECIAL_CHAR[c];
+            return REGEXP_ESCAPE_CHAR[c];
         }
         
     };

@@ -29,15 +29,17 @@ namespace mini_regexp_vm
         struct split_stack_t
         {
             std::ptrdiff_t ip;
+            std::ptrdiff_t target_start_pos;
             std::ptrdiff_t match_index, match_len;
             std::ptrdiff_t sub_match_start, sub_match_len;
-            split_stack_t():ip(-1),match_index(-1),match_len(0),sub_match_start(0), sub_match_len(0) {}
+            split_stack_t():ip(-1),target_start_pos(0),match_index(-1),match_len(0),sub_match_start(0), sub_match_len(0) {}
             split_stack_t(std::ptrdiff_t _ip, 
+                          std::ptrdiff_t _start_pos,
                           std::ptrdiff_t _index, 
                           std::ptrdiff_t _len, 
                           std::ptrdiff_t _sub_match_start, 
                           std::ptrdiff_t _sub_match_len)
-                :ip(_ip),match_index(_index),match_len(_len),sub_match_start(_sub_match_start),sub_match_len(_sub_match_len) {}
+                :ip(_ip),target_start_pos(_start_pos),match_index(_index),match_len(_len),sub_match_start(_sub_match_start),sub_match_len(_sub_match_len) {}
         };
 
         struct repeat_stack_t
@@ -47,8 +49,18 @@ namespace mini_regexp_vm
             repeat_stack_t():ip(-1),n(-1) {}
             repeat_stack_t(std::ptrdiff_t _ip, std::ptrdiff_t _n):ip(_ip),n(_n) {}
         };
+
+        struct zero_width_assert_stack_t
+        {
+            TOKEN tk;
+            std::ptrdiff_t _matched_index, _matched_len;
+            zero_width_assert_stack_t():tk(TOKEN::ERR),_matched_index(0),_matched_len(0) {}
+            zero_width_assert_stack_t(TOKEN _tk, std::ptrdiff_t minx, std::ptrdiff_t mlen):tk(_tk),_matched_index(minx),_matched_len(mlen) {}
+        };
+
         std::stack<split_stack_t> Split_stack;
         std::stack<repeat_stack_t> Repeat_stack;
+        std::stack<zero_width_assert_stack_t> ZeroWidthAssert_stack;
 
 
         std::ptrdiff_t _matched_index, _matched_len,
@@ -58,10 +70,13 @@ namespace mini_regexp_vm
 
     public:
         RE_VM();
-        bool vm(const std::string& target, std::vector<ByteCode>& Code, RE_Config& config);
+        bool vm(const std::string& target, 
+            std::vector<ByteCode>& Code, RE_Config& config);
 
     private:
         void vm_init(const std::string& target, std::vector<ByteCode>& Code);
+        bool vm_main(const std::string& target,
+            std::vector<ByteCode>& Code, RE_Config& config);
         void vm_stack_init();
         void vm_result_init();
 
@@ -79,6 +94,8 @@ namespace mini_regexp_vm
         void vm_split(std::vector<ByteCode>& Code);
         void vm_repeat(std::vector<ByteCode>& Code);
         bool vm_range(const std::string& target, std::vector<ByteCode>& Code);
+
+        void vm_zero_width_assert(const std::string& target);
         
     };
 }

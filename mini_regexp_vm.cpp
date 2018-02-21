@@ -10,9 +10,25 @@ bool RE_VM::vm(const std::string& target, std::vector<ByteCode>& Code, RE_Config
 {
     vm_init(target, Code);
     vm_result_init();
+    return vm_main(target, Code, config);
+}
 
+inline void RE_VM::vm_init(const std::string& target, std::vector<ByteCode>& Code)
+{
+    _code_ip = 0; 
+    _code_len = Code.size();
+    _target_start_pos = 0; 
+    _target_len = target.length();
+    _matched_index = 0; 
+    _matched_len = 0;
+    _sub_matched_start = 0; 
+    _sub_matched_len = 0;
+}
+
+bool RE_VM::vm_main(const std::string& target,
+            std::vector<ByteCode>& Code, RE_Config& config)
+{
     bool is_accept = false;
-
     while (_target_start_pos < _target_len)
     {
         vm_stack_init();
@@ -66,6 +82,22 @@ bool RE_VM::vm(const std::string& target, std::vector<ByteCode>& Code, RE_Config
                     break;
                 }
 
+                /*--- 零宽断言 start ---*/
+
+                case BYTE_CODE::ZERO_WIDTH_ASSERT_ENTER:
+                    ZeroWidthAssert_stack.push(zero_width_assert_stack_t((TOKEN)reinterpret_cast<std::ptrdiff_t>(Code[_code_ip].exp1),
+                        _matched_index, _matched_len));
+                    _code_ip++;
+                    break;
+
+                case BYTE_CODE::ZERO_WIDTH_ASSERT_LEAVE:
+                {
+                    vm_zero_width_assert(target);
+                    break;
+                }
+
+                /*--- 零宽断言 end   ---*/
+
                 case BYTE_CODE::ACCEPT:
                     _code_ip++;
                     is_accept = true;
@@ -104,22 +136,11 @@ bool RE_VM::vm(const std::string& target, std::vector<ByteCode>& Code, RE_Config
     return true;
 }
 
-inline void RE_VM::vm_init(const std::string& target, std::vector<ByteCode>& Code)
-{
-    _code_ip = 0; 
-    _code_len = Code.size();
-    _target_start_pos = 0; 
-    _target_len = target.length();
-    _matched_index = 0; 
-    _matched_len = 0;
-    _sub_matched_start = 0; 
-    _sub_matched_len = 0;
-}
-
 inline void RE_VM::vm_stack_init()
 {
     while (!Split_stack.empty()) Split_stack.pop();
     while (!Repeat_stack.empty()) Repeat_stack.pop();
+    while (!ZeroWidthAssert_stack.empty()) ZeroWidthAssert_stack.pop();
 }
 
 inline void RE_VM::vm_result_init()
@@ -140,6 +161,7 @@ inline void RE_VM::vm_split(std::vector<ByteCode>& Code)
     // }
     /* 默认选exp1分支 执行失败则进入exp2分支 */
     Split_stack.push(split_stack_t(_code_ip + exp2,
+                                   _target_start_pos,
                                    _matched_index, _matched_len,
                                    _sub_matched_start, _sub_matched_len));
     _code_ip += exp1;
@@ -207,6 +229,7 @@ inline bool RE_VM::_vm_backtrack()
     if (!Split_stack.empty())
     {
         _code_ip = Split_stack.top().ip;
+        _target_start_pos = Split_stack.top().target_start_pos;
         _matched_index = Split_stack.top().match_index;
         _matched_len   = Split_stack.top().match_len;
         _sub_matched_start = Split_stack.top().sub_match_start;
@@ -251,6 +274,28 @@ inline bool RE_VM::vm_range(const std::string& target, std::vector<ByteCode>& Co
         return _vm_match_ok();
     else
         return _vm_backtrack();
+}
+
+inline void RE_VM::vm_zero_width_assert(const std::string& target)
+{
+    switch (ZeroWidthAssert_stack.top().tk)
+    {
+        case TOKEN::FORWARD_PRE_MATCH: case TOKEN::FORWARD_PRE_MATCH_NOT:
+            _matched_index = ZeroWidthAssert_stack.top()._matched_index;
+            _matched_len = ZeroWidthAssert_stack.top()._matched_len;
+            ZeroWidthAssert_stack.pop();
+            break;
+        case TOKEN::BACKWORD_PRE_MATCH: case TOKEN::BACKWORD_PRE_MATCH_NOT:
+            _target_start_pos += _matched_len - ZeroWidthAssert_stack.top()._matched_len;
+            _matched_len -= _matched_len - ZeroWidthAssert_stack.top()._matched_len;
+            ZeroWidthAssert_stack.pop();
+            break;
+        case TOKEN::NORMAL_PRE_MATCH: break;
+        default:
+            /* ERROR 不应该出现其他类型 */
+            break;
+    }
+    _code_ip++;
 }
 
 #endif

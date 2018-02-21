@@ -11,8 +11,10 @@ namespace mini_regexp_code
         JMP,    /* jmp addr */
         REPEAT, /* repeat n */
         REPEND, /* repend */
-        ENTER,  /* ( */
-        LEAVE,  /* ) */
+        ENTER,  /* "(" */
+        LEAVE,  /* ")" */
+        ZERO_WIDTH_ASSERT_ENTER, /* "(?" zwae type (type := : | = | ! | <= | <!) */
+        ZERO_WIDTH_ASSERT_LEAVE, /* ")"  zwae */
         RANGE,  /* range _start, _end(_start < c < _end) */
         ACCEPT,
     };

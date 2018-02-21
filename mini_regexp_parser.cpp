@@ -10,10 +10,14 @@ RE_Parser::RE_Parser() {}
 bool RE_Parser::parser(RE_Lexer& _lexer, RE_Config& config)
 {
     parser_init();
-
-    std::ptrdiff_t _index = 0, _len = _lexer.Token.size();
     std::reverse(_lexer.Text.begin(), _lexer.Text.end());
+    return parse_main(_lexer, 0, _lexer.Token.size(), config);
+}
 
+bool RE_Parser::parse_main(RE_Lexer& _lexer, 
+    std::ptrdiff_t _index, std::ptrdiff_t _len, 
+    RE_Config& config)
+{
     while (_index < _len)
     {
         switch (_lexer.Token[_index])
@@ -110,13 +114,32 @@ bool RE_Parser::parser(RE_Lexer& _lexer, RE_Config& config)
                 break; 
             }
 
+            /*--- 零宽断言 start ---*/
+
+            case TOKEN::ZERO_WIDTH_ASSERT_LBRACKET:
+                Parser_Stack.push_back(parse_stack_t(TOKEN::ZERO_WIDTH_ASSERT_LBRACKET, 
+                    1, Code.size()));
+                Code.push_back(CODE_ELM(BYTE_CODE::ZERO_WIDTH_ASSERT_ENTER, 
+                    _lexer.Token[++_index], 0));
+                ZeroWidthAssert_Parse_Stack.push_back(zero_width_assert_parse_t(_lexer.Token[_index]));
+                break;
+
+            case TOKEN::ZERO_WIDTH_ASSERT_RBRACKET:
+            {
+                parse_zero_width_assert();
+                break;
+            }
+
+            /*--- 零宽断言 end ---*/
+
             case TOKEN::GROUP:
                 parse_group(_lexer);
                 break;
 
             case TOKEN::EXP: break;
             default:
-                std::cout << "parse: err." << std::endl;
+                /*ERROR */
+                std::cout << "ERROR: parse." << std::endl;
                 return false;
         }
         ++_index;
@@ -171,6 +194,30 @@ void RE_Parser::output_code()
             case BYTE_CODE::LEAVE:
                 std::cout << "  LEAVE " << std::endl;
                 break;
+            case BYTE_CODE::ZERO_WIDTH_ASSERT_ENTER:
+                std::cout << "  ZERO_WIDTH_ASSERT_ENTER ";
+                switch (reinterpret_cast<std::ptrdiff_t>(i.exp1))
+                {
+                    case TOKEN::FORWARD_PRE_MATCH:
+                        std::cout << "FORWARD_PRE_MATCH" << std::endl;
+                        break;
+                    case TOKEN::FORWARD_PRE_MATCH_NOT:
+                        std::cout << "FORWARD_PRE_MATCH_NOT" << std::endl;
+                        break;
+                    case TOKEN::BACKWORD_PRE_MATCH:
+                        std::cout << "BACKWORD_PRE_MATCH" << std::endl;
+                        break;
+                    case TOKEN::BACKWORD_PRE_MATCH_NOT:
+                        std::cout << "BACKWORD_PRE_MATCH_NOT" << std::endl;
+                        break;
+                    case TOKEN::NORMAL_PRE_MATCH:
+                        std::cout << "NORMAL_PRE_MATCH" << std::endl;
+                        break;
+                }
+                break;
+            case BYTE_CODE::ZERO_WIDTH_ASSERT_LEAVE:
+                std::cout << "  ZERO_WIDTH_ASSERT_LEAVE " << std::endl;
+                break;
             default:
                 std::cout << "  unknown unknown unknown" << std::endl;
                 break;
@@ -183,6 +230,7 @@ inline void RE_Parser::parser_init()
 {
     Parser_Stack.clear();
     Code.clear();
+    ZeroWidthAssert_Parse_Stack.clear();
 }
 
 inline void RE_Parser::parse_string(RE_Lexer& _lexer)
@@ -261,7 +309,9 @@ inline void RE_Parser::parse_closure(bool greedy_mode)
 
 bool RE_Parser::parse_exp()
 {
-    while (Parser_Stack.size() > 1 && Parser_Stack.back().tk != TOKEN::LBRACKET)
+    while (Parser_Stack.size() > 1 
+        && Parser_Stack.back().tk != TOKEN::LBRACKET 
+        && Parser_Stack.back().tk != TOKEN::ZERO_WIDTH_ASSERT_LBRACKET)
     {
         /* 归约解析表达式 需处理or操作 */
         bool have_or = false;
@@ -271,7 +321,8 @@ bool RE_Parser::parse_exp()
 
         while (!Parser_Stack.empty() 
                 && Parser_Stack.back().tk != TOKEN::OR 
-                && Parser_Stack.back().tk != TOKEN::LBRACKET)
+                && Parser_Stack.back().tk != TOKEN::LBRACKET
+                && Parser_Stack.back().tk != TOKEN::ZERO_WIDTH_ASSERT_LBRACKET)
         {
             l_exp.n += Parser_Stack.back().n;
             l_exp.ip = Parser_Stack.back().ip;
@@ -287,7 +338,8 @@ bool RE_Parser::parse_exp()
 
             while (!Parser_Stack.empty() 
                     && Parser_Stack.back().tk != TOKEN::OR 
-                    && Parser_Stack.back().tk != TOKEN::LBRACKET)
+                    && Parser_Stack.back().tk != TOKEN::LBRACKET
+                    && Parser_Stack.back().tk != TOKEN::ZERO_WIDTH_ASSERT_LBRACKET)
             {
                 r_exp.n += Parser_Stack.back().n;
                 r_exp.ip = Parser_Stack.back().ip;
@@ -335,7 +387,7 @@ bool RE_Parser::parse_exp()
         Parser_Stack.pop_back(); /* EXP */
         exp.ip = Parser_Stack.back().ip;
         Parser_Stack.pop_back(); /* ( */
-        exp.n += 2;
+        exp.n += 2; /* 加了一对 ENTER LEAVE */
         Parser_Stack.push_back(exp);
     }
 
@@ -505,6 +557,31 @@ inline void RE_Parser::parse_group(RE_Lexer& _lexer)
     Parser_Stack.push_back(parse_stack_t(TOKEN::STRING, 1, Code.size()));
     Code.push_back(CODE_ELM(BYTE_CODE::MATCH, TOKEN::GROUP, str2int(_lexer.Text.back())));
     _lexer.Text.pop_back();
+}
+
+inline void RE_Parser::parse_zero_width_assert()
+{
+    parse_exp();
+    /* LEAVE */
+    Parser_Stack.back().n++;
+    Code.push_back(CODE_ELM(BYTE_CODE::ZERO_WIDTH_ASSERT_LEAVE, 1, 0));
+    /* NOT */
+    auto exp1 = ZeroWidthAssert_Parse_Stack.back().tk;
+    ZeroWidthAssert_Parse_Stack.pop_back();
+    if (exp1 == TOKEN::FORWARD_PRE_MATCH_NOT 
+        || exp1 == TOKEN::BACKWORD_PRE_MATCH_NOT)
+    {
+        auto pst = Parser_Stack.back();
+        Parser_Stack.pop_back();
+        if (pst.ip + pst.n >= Code.size())
+            Code.push_back(CODE_ELM(BYTE_CODE::HALT, 0, 0));
+        else
+            Code.insert(Code.begin() + pst.ip + pst.n, CODE_ELM(BYTE_CODE::HALT, 0, 0));
+        Code.insert(Code.begin() + pst.ip + 1, CODE_ELM(BYTE_CODE::SPLIT, 1, pst.n));
+        pst.tk = TOKEN::EXP;
+        pst.n += 2;
+        Parser_Stack.push_back(pst);
+    }
 }
 
 #endif

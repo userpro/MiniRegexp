@@ -1,6 +1,5 @@
 #ifndef MINI_REGEXP_LEXER_CPP_
 #define MINI_REGEXP_LEXER_CPP_
-#include <iostream>
 #include "mini_regexp_lexer.hpp"
 using namespace mini_regexp_lexer;
 
@@ -10,9 +9,16 @@ void RE_Lexer::lexer(const std::string& regexp, RE_Config& config)
 {
     lexer_init();
     std::ptrdiff_t _index = 0, _len = regexp.length();
-    while (_index < _len)
+    lexer_main(regexp, 0, regexp.length(), config);
+}
+
+void RE_Lexer::lexer_main(
+    const std::string& s, std::ptrdiff_t _start, std::ptrdiff_t _end, RE_Config& config)
+{
+    auto _index = _start;
+    while (_index < _end)
     {
-        auto ch = regexp[_index];
+        auto ch = s[_index];
         if (mini_keywords.is_normal_token(ch))
         {
             Token.push_back(mini_keywords.get_normal_token(ch));
@@ -20,10 +26,11 @@ void RE_Lexer::lexer(const std::string& regexp, RE_Config& config)
         }
         else
         {
-            _index = lexer_special_token(regexp, _index, _len, config);
+            _index = lexer_special_token(s, _index, _end, config);
         }
     }
 }
+
 
 inline void RE_Lexer::lexer_init()
 {
@@ -39,16 +46,26 @@ inline void RE_Lexer::lexer_predefined_char(std::string s)
     Text.push_back(s);
 }
 
-inline std::ptrdiff_t RE_Lexer::lexer_special_token(const std::string& regexp, std::ptrdiff_t _index, std::ptrdiff_t _len, RE_Config& config)
+inline std::ptrdiff_t RE_Lexer::lexer_special_token(
+    const std::string& regexp, std::ptrdiff_t _index, std::ptrdiff_t _len, RE_Config& config)
 {
     auto ch = regexp[_index];
     switch (ch)
     {
+        case '/': _index++; break;
+
         case '(':
-            // ... 
             /* 零宽断言 zero width assert (?:) (?=) (?!) (?<=) (?<!) */
-            Token.push_back(TOKEN::LBRACKET);
-            _index++;
+            if (regexp[_index + 1] == '?')
+            {
+                /* index + 2 => "(?" */
+                _index = lexer_zero_width_assert(regexp, _index + 2, config);
+            }
+            else
+            {
+                Token.push_back(TOKEN::LBRACKET);
+                _index++;
+            }
             break;
 
         case '^': 
@@ -80,7 +97,7 @@ inline std::ptrdiff_t RE_Lexer::lexer_special_token(const std::string& regexp, s
         /* 正则规定的特殊转义字符 */
         case '\\':
         {
-            _index = lexer_special_char(regexp, _index);
+            _index = lexer_escape_char(regexp, _index);
             break;
         }
 
@@ -98,13 +115,62 @@ inline std::ptrdiff_t RE_Lexer::lexer_special_token(const std::string& regexp, s
     return _index;
 }
 
+inline std::ptrdiff_t RE_Lexer::lexer_zero_width_assert(
+    const std::string& regexp, std::ptrdiff_t _index, RE_Config& config)
+{
+    Token.push_back(TOKEN::ZERO_WIDTH_ASSERT_LBRACKET);
+    auto _start = _index;
+    switch (regexp[_index])
+    {
+        case ':': 
+            Token.push_back(TOKEN::NORMAL_PRE_MATCH);
+            _index++; 
+            break;
+        case '=':
+            Token.push_back(TOKEN::FORWARD_PRE_MATCH);
+            _index++;
+            break;
+        case '!':
+            Token.push_back(TOKEN::FORWARD_PRE_MATCH_NOT);
+            _index++;
+            break;
+        case '<':
+            if (regexp[_index + 1] == '=')
+                Token.push_back(TOKEN::BACKWORD_PRE_MATCH);
+            else if (regexp[_index + 1] == '!')
+                Token.push_back(TOKEN::BACKWORD_PRE_MATCH_NOT);
+            else
+            {
+                /* ERROR */
+                _index++;
+                break;
+            }
+            _index += 2;
+            break;
+        default:
+            /* ?后面缺少 : = ! <= <! */
+            Token.push_back(TOKEN::NORMAL_PRE_MATCH);
+            _index++;
+            break;
+    }
+    _start = _index;
+    while (regexp[_index++] != ')')
+        ;
+    std::string pattern = regexp.substr(_start, _index - _start - 1);
+    lexer_main(pattern, 0, pattern.length(), config);
+    /* ) */
+    Token.push_back(TOKEN::ZERO_WIDTH_ASSERT_RBRACKET);
+    return _index;
+}
 
-std::ptrdiff_t RE_Lexer::lexer_special_char(const std::string& regexp, std::ptrdiff_t _index)
+
+std::ptrdiff_t RE_Lexer::lexer_escape_char(
+    const std::string& regexp, std::ptrdiff_t _index)
 {
     auto spec_ch = regexp[++_index];
-    if (mini_keywords.is_special_char(spec_ch))
+    if (mini_keywords.is_escape_char(spec_ch))
     {
-        lexer_predefined_char(mini_keywords.get_special_char(spec_ch));
+        lexer_predefined_char(mini_keywords.get_escape_char(spec_ch));
         return _index + 1;
     }
     else
@@ -118,8 +184,6 @@ std::ptrdiff_t RE_Lexer::lexer_special_char(const std::string& regexp, std::ptrd
                 std::string s;
                 num = regexp.substr(_index + 1, 3);
                 Text.push_back(s + char(str2oct(num)));
-
-                std::cout << str2oct(num) << std::endl;
                 Token.push_back(TOKEN::STRING);
                 _index += 4;
                 break;
@@ -146,10 +210,10 @@ std::ptrdiff_t RE_Lexer::lexer_special_char(const std::string& regexp, std::ptrd
                 std::string s1, s2;
                 num = regexp.substr(_index + 1, 2);
                 auto num2 = regexp.substr(_index + 3, 2);
-                Text.push_back(s1 + char(str2hex(num)));
+                Text.push_back(s1 + char(str2hex(num))+ char(str2hex(num2)));
                 Token.push_back(TOKEN::STRING);
-                Text.push_back(s2 + char(str2hex(num2)));
-                Token.push_back(TOKEN::STRING);
+                // Text.push_back(s2 );
+                // Token.push_back(TOKEN::STRING);
                 _index += 5;
                 break;
             }
@@ -166,7 +230,8 @@ std::ptrdiff_t RE_Lexer::lexer_special_char(const std::string& regexp, std::ptrd
 }
 
 
-inline std::ptrdiff_t RE_Lexer::lexer_get_digit(const std::string& regexp, std::string& num, std::ptrdiff_t _index)
+inline std::ptrdiff_t RE_Lexer::lexer_get_digit(
+    const std::string& regexp, std::string& num, std::ptrdiff_t _index)
 {
     auto _start = _index;
     while (is_range_in(regexp[_index++], '0', '9'))
@@ -175,7 +240,8 @@ inline std::ptrdiff_t RE_Lexer::lexer_get_digit(const std::string& regexp, std::
     return _index;
 }
 
-inline std::ptrdiff_t RE_Lexer::lexer_get_close_exp(const std::string& regexp, std::ptrdiff_t _index, char _end)
+inline std::ptrdiff_t RE_Lexer::lexer_get_close_exp(
+    const std::string& regexp, std::ptrdiff_t _index, char _end)
 {
     auto st = _index + 1, ed = _index;
     while (regexp[++ed] != _end);

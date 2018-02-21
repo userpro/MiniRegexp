@@ -30,12 +30,14 @@ namespace mini_regexp_lexer
 
     private:
         void lexer_init();
+        void lexer_main(const std::string& s, std::ptrdiff_t _start, std::ptrdiff_t _end, RE_Config& config);
         std::ptrdiff_t lexer_special_token(const std::string& regexp, std::ptrdiff_t _index, std::ptrdiff_t _len, RE_Config& config);
         
         void lexer_predefined_char(std::string s);
         std::ptrdiff_t lexer_get_digit(const std::string& regexp, std::string& num, std::ptrdiff_t _index);
-        std::ptrdiff_t lexer_special_char(const std::string& regexp, std::ptrdiff_t _index);
+        std::ptrdiff_t lexer_escape_char(const std::string& regexp, std::ptrdiff_t _index);
         std::ptrdiff_t lexer_get_close_exp(const std::string& regexp, std::ptrdiff_t _index, char _end);
+        std::ptrdiff_t lexer_zero_width_assert(const std::string& regexp, std::ptrdiff_t _index, RE_Config& config);
 
     };
 }

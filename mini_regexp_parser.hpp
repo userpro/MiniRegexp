@@ -40,6 +40,13 @@ namespace mini_regexp_parser
 
         std::vector<ByteCode> Code; /* codegen */
 
+        struct zero_width_assert_parse_t
+        {
+            TOKEN tk;
+            zero_width_assert_parse_t(TOKEN _tk):tk(_tk) {}
+        };
+        std::vector<zero_width_assert_parse_t> ZeroWidthAssert_Parse_Stack;
+
     public:
         RE_Parser();
         bool parser(RE_Lexer& _lexer, RE_Config& config);
@@ -47,15 +54,19 @@ namespace mini_regexp_parser
 
     private:
         void parser_init();
+        bool parse_main(RE_Lexer& _lexer, 
+            std::ptrdiff_t _index, std::ptrdiff_t _len, 
+            RE_Config& config);
         void parse_string(RE_Lexer& _lexer);
         void parse_any();
-        bool parse_exp();
+        bool parse_exp(); /* 子表达式和零宽断言 */
         void parse_plus(bool greedy_mode = true);
         void parse_question(bool greedy_mode = true);
         void parse_closure(bool greedy_mode = true);
         bool parse_brace(std::string& exp, bool greedy_mode = true);
         bool parse_square_brace(std::string& exp);
         void parse_group(RE_Lexer& _lexer);
+        void parse_zero_width_assert();
     };
 }
 #endif

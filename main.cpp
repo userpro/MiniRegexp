@@ -66,7 +66,12 @@ int main()
         {"(ab)*cd"      , "aaabcd"              },
         {"(2)(2)\\1\\2" , "22222"               },
         {"\\d{1,3}\\.\\d{1,3}\\.\\d{1,3}\\.\\d{1,3}", "192.168.0.255"},
-        {"\\u00a9\\x41\\010111"    , "©AA11"       },
+        {"\\u00a9\\x41\\010111", "©AA11"        },
+        {"(?:as|bd)vv"  , "asvv"                },
+        {"(?<=95|98|NT|2000)Windows.", "2000Windowsa 3.1Windowsb"},
+        {"(?<!95|98|NT|2000)Windows.", "3.1Windowsc2000Windowsa 3.1Windowsb"},
+        {"industr(?:y|ies)", "industries"       },
+        // {"^([a-z0-9_\\.-]+)@([\\da-z\\.-]+)\\.([a-z\\.]{2,6})$"}
 
         /* ERROR empty loop! dead loop! */
         // {"(a*)*"        , "aaaaaaaaaaaaaaaaaaaaaaaaaaaab"},
