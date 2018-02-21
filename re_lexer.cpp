@@ -1,6 +1,6 @@
 #ifndef MINI_REGEXP_LEXER_CPP_
 #define MINI_REGEXP_LEXER_CPP_
-#include "mini_regexp_lexer.hpp"
+#include "re_lexer.hpp"
 using namespace mini_regexp_lexer;
 
 RE_Lexer::RE_Lexer() {}

@@ -3,11 +3,13 @@
 
 #include <string>
 #include <algorithm>
-#include "mini_regexp_token.hpp"
+#include "re_token.hpp"
+#include "re_config.hpp"
 
 namespace mini_regexp_keywords
 {
     using namespace mini_regexp_token;
+    using namespace mini_regexp_config;
 
     class RE_Keywords
     {

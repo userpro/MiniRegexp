@@ -6,11 +6,11 @@
 #include <vector>
 #include <iostream>
 
-#include "mini_regexp_token.hpp"
-#include "mini_regexp_code.hpp"
-#include "mini_regexp_config.hpp"
-#include "mini_regexp_result.hpp"
-#include "mini_regexp_common.hpp"
+#include "re_token.hpp"
+#include "re_code.hpp"
+#include "re_config.hpp"
+#include "re_result.hpp"
+#include "re_common.hpp"
 
 namespace mini_regexp_vm
 {

@@ -3,10 +3,10 @@
 
 #include <string>
 #include <vector>
-#include "mini_regexp_token.hpp"
-#include "mini_regexp_config.hpp"
-#include "mini_regexp_keywords.hpp"
-#include "mini_regexp_common.hpp"
+#include "re_token.hpp"
+#include "re_config.hpp"
+#include "re_keywords.hpp"
+#include "re_common.hpp"
 
 namespace mini_regexp_lexer
 {

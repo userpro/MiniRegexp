@@ -4,11 +4,11 @@
 #include <vector>
 #include <algorithm>
 #include <iostream>
-#include "mini_regexp_token.hpp"
-#include "mini_regexp_lexer.hpp"
-#include "mini_regexp_code.hpp"
-#include "mini_regexp_config.hpp"
-#include "mini_regexp_common.hpp"
+#include "re_token.hpp"
+#include "re_lexer.hpp"
+#include "re_code.hpp"
+#include "re_config.hpp"
+#include "re_common.hpp"
 
 #define CODE_ELM(a,b,c) ByteCode(a, reinterpret_cast<void*>(b), reinterpret_cast<void*>(c))
 

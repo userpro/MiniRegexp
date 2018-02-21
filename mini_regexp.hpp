@@ -6,13 +6,13 @@
 #include <string>
 #include <algorithm>
 #include <iostream>
-#include "mini_regexp_token.hpp"
-#include "mini_regexp_code.hpp"
-#include "mini_regexp_lexer.hpp"
-#include "mini_regexp_parser.hpp"
-#include "mini_regexp_vm.hpp"
-#include "mini_regexp_config.hpp"
-#include "mini_regexp_result.hpp"
+#include "re_token.hpp"
+#include "re_code.hpp"
+#include "re_lexer.hpp"
+#include "re_parser.hpp"
+#include "re_vm.hpp"
+#include "re_config.hpp"
+#include "re_result.hpp"
 
 using namespace mini_regexp_code;
 using namespace mini_regexp_token;

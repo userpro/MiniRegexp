@@ -1,7 +1,7 @@
 #ifndef MINI_REGEXP_VM_CPP_
 #define MINI_REGEXP_VM_CPP_
 
-#include "mini_regexp_vm.hpp"
+#include "re_vm.hpp"
 using namespace mini_regexp_vm;
 
 RE_VM::RE_VM() {}

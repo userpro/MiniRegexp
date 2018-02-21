@@ -1,7 +1,7 @@
 #ifndef MINI_REGEXP_PARSER_CPP_
 #define MINI_REGEXP_PARSER_CPP_
 
-#include "mini_regexp_parser.hpp"
+#include "re_parser.hpp"
 
 using namespace mini_regexp_parser;
 
