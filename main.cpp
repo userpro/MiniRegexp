@@ -68,10 +68,11 @@ int main()
         {"\\d{1,3}\\.\\d{1,3}\\.\\d{1,3}\\.\\d{1,3}", "192.168.0.255"},
         {"\\u00a9\\x41\\010111", "©AA11"        },
         {"(?:as|bd)vv"  , "asvv"                },
-        {"(?<=95|98|NT|2000)Windows.", "2000Windowsa 3.1Windowsb"},
-        {"(?<!95|98|NT|2000)Windows.", "3.1Windowsc2000Windowsa 3.1Windowsb"},
-        {"industr(?:y|ies)", "industries"       },
-        // {"^([a-z0-9_\\.-]+)@([\\da-z\\.-]+)\\.([a-z\\.]{2,6})$"}
+        {"(?<=95|98|NT|\\d*)Windows.", "2000Windowsa 3.1Windowsb"},
+        {"(?<!95|98|NT|\\d*)Windows.", "3.1Windowsc2000Windowsa 3.1Windowsb"},
+        {"\\d*", "12345"},
+        {"industr(?:y|\\d)", "industr2"       },
+        {"^([a-z0-9_.-]+)@([0-9a-z.-]+)\\.([a-z.]{2,6})$", "437773935@qq.com"},
 
         /* ERROR empty loop! dead loop! */
         // {"(a*)*"        , "aaaaaaaaaaaaaaaaaaaaaaaaaaaab"},

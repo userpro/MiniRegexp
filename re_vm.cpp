@@ -87,12 +87,20 @@ bool RE_VM::vm_main(const std::string& target,
                 case BYTE_CODE::ZERO_WIDTH_ASSERT_ENTER:
                     ZeroWidthAssert_stack.push(zero_width_assert_stack_t((TOKEN)reinterpret_cast<std::ptrdiff_t>(Code[_code_ip].exp1),
                         _matched_index, _matched_len));
+                    /* 清理栈环境 */
+                    while (!Sub_Split_stack.empty()) Sub_Split_stack.pop();
+                    /* 切换子栈 */
+                    std::swap(Split_stack, Sub_Split_stack);
                     _code_ip++;
                     break;
 
                 case BYTE_CODE::ZERO_WIDTH_ASSERT_LEAVE:
                 {
                     vm_zero_width_assert(target);
+                    /* 恢复栈 */
+                    std::swap(Split_stack, Sub_Split_stack);
+                    /* 清理子栈环境 */
+                    while (!Sub_Split_stack.empty()) Sub_Split_stack.pop();
                     break;
                 }
 
@@ -141,6 +149,7 @@ inline void RE_VM::vm_stack_init()
     while (!Split_stack.empty()) Split_stack.pop();
     while (!Repeat_stack.empty()) Repeat_stack.pop();
     while (!ZeroWidthAssert_stack.empty()) ZeroWidthAssert_stack.pop();
+    while (!Sub_Split_stack.empty()) Sub_Split_stack.pop();
 }
 
 inline void RE_VM::vm_result_init()

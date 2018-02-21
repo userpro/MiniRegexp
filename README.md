@@ -3,29 +3,16 @@
 
 生成opcode再执行 opcode的地址采用相对地址 
 
-## 中间指令
-`split addr1 addr2`
-
-`match ch`
-
-`range l, r`
-
-`jmp addr`
-
-`accept`
-
-`halt`
-
 ## 支持
-`{` `}` `[` `]` `(` `)` `|` `*` `\b` `\d` `.` `?` `+`
+支持 [正则速查表](http://www.jb51.net/tools/regexsc.htm)
 
-`转义字符`
+`[]` 语句只支持 `[^0-9asd]`...etc
 
-## Update
-
-
-
-## NEXT
+不支持在里面使用`\b` `\d`等正则转义字符
 
 
-- 增加全局最长匹配
+## 示例
+
+详见`main.cpp`
+ 
+ 
