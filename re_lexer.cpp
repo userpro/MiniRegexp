@@ -47,13 +47,11 @@ inline void RE_Lexer::lexer_predefined_char(std::string s)
 }
 
 inline std::ptrdiff_t RE_Lexer::lexer_special_token(
-    const std::string& regexp, std::ptrdiff_t _index, std::ptrdiff_t _len, RE_Config& config)
+    const std::string& regexp, std::ptrdiff_t _index, std::ptrdiff_t _end, RE_Config& config)
 {
     auto ch = regexp[_index];
     switch (ch)
     {
-        case '/': _index++; break;
-
         case '(':
             /* 零宽断言 zero width assert (?:) (?=) (?!) (?<=) (?<!) */
             if (regexp[_index + 1] == '?')
@@ -104,7 +102,7 @@ inline std::ptrdiff_t RE_Lexer::lexer_special_token(
         default:
         {
             unsigned int start_pos = _index, end_pos = _index;
-            while (end_pos < _len && !mini_keywords.is_keyword(regexp[end_pos]))
+            while (end_pos < _end && !mini_keywords.is_keyword(regexp[end_pos]))
                 end_pos++;
             Text.push_back(regexp.substr(start_pos, end_pos - start_pos));
             Token.push_back(TOKEN::STRING);
@@ -191,7 +189,7 @@ std::ptrdiff_t RE_Lexer::lexer_escape_char(
             /* 十进制 \X... */
             case'1':case'2':case'3':case'4':case'5':
             case'6':case'7':case'8':case'9':
-                _index = lexer_get_digit(regexp, num, _index);
+                _index += str_get_digit(regexp, _index, num);
                 Text.push_back(num);
                 Token.push_back(TOKEN::GROUP);
                 break;
@@ -205,15 +203,14 @@ std::ptrdiff_t RE_Lexer::lexer_escape_char(
                 break;
             }
 
-            case 'u': /* Unicode \uXXXX 拆成2字节匹配 */
+            case 'u': /* Unicode \uXXXX */
             {
                 std::string s1, s2;
                 num = regexp.substr(_index + 1, 2);
                 auto num2 = regexp.substr(_index + 3, 2);
                 Text.push_back(s1 + char(str2hex(num))+ char(str2hex(num2)));
                 Token.push_back(TOKEN::STRING);
-                // Text.push_back(s2 );
-                // Token.push_back(TOKEN::STRING);
+                // std::cout << Text.back().length() << std::endl;
                 _index += 5;
                 break;
             }
@@ -226,17 +223,6 @@ std::ptrdiff_t RE_Lexer::lexer_escape_char(
                 break;
         }
     }
-    return _index;
-}
-
-
-inline std::ptrdiff_t RE_Lexer::lexer_get_digit(
-    const std::string& regexp, std::string& num, std::ptrdiff_t _index)
-{
-    auto _start = _index;
-    while (is_range_in(regexp[_index++], '0', '9'))
-        ;
-    num = regexp.substr(_start, _index - _start);
     return _index;
 }
 

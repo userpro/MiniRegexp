@@ -45,6 +45,15 @@ namespace mini_regexp_common
             num = num * 8 + s[i] - '0';
         return num;
     }
+
+    inline std::ptrdiff_t str_get_digit(const std::string& s, std::ptrdiff_t _index, std::string& num)
+    {
+        auto _start = _index;
+        while (is_range_in(s[_index++], '0', '9'))
+            ;
+        num = s.substr(_start, _index - _start);
+        return _index - _start;
+    }
 }
 
 #endif

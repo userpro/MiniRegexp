@@ -85,22 +85,18 @@ bool RE_VM::vm_main(const std::string& target,
                 /*--- 零宽断言 start ---*/
 
                 case BYTE_CODE::ZERO_WIDTH_ASSERT_ENTER:
-                    ZeroWidthAssert_stack.push(zero_width_assert_stack_t((TOKEN)reinterpret_cast<std::ptrdiff_t>(Code[_code_ip].exp1),
-                        _matched_index, _matched_len));
-                    /* 清理栈环境 */
-                    while (!Sub_Split_stack.empty()) Sub_Split_stack.pop();
-                    /* 切换子栈 */
-                    std::swap(Split_stack, Sub_Split_stack);
+                    ZeroWidthAssert_stack.push(
+                        zero_width_assert_stack_t(
+                            (TOKEN)reinterpret_cast<std::ptrdiff_t>(Code[_code_ip].exp1),
+                            _matched_index, _matched_len));
+                    vm_switch_eval_stack();
                     _code_ip++;
                     break;
 
                 case BYTE_CODE::ZERO_WIDTH_ASSERT_LEAVE:
                 {
                     vm_zero_width_assert(target);
-                    /* 恢复栈 */
-                    std::swap(Split_stack, Sub_Split_stack);
-                    /* 清理子栈环境 */
-                    while (!Sub_Split_stack.empty()) Sub_Split_stack.pop();
+                    vm_switch_eval_stack();
                     break;
                 }
 
@@ -157,6 +153,14 @@ inline void RE_VM::vm_result_init()
     regex_result.count = 0;
     regex_result.sub_matched.clear();
     regex_result.matched.clear();
+}
+
+inline void RE_VM::vm_switch_eval_stack()
+{
+    /* 清理子栈环境 */
+    while (!Sub_Split_stack.empty()) Sub_Split_stack.pop();
+    /* 恢复栈 */
+    std::swap(Split_stack, Sub_Split_stack);
 }
 
 inline void RE_VM::vm_split(std::vector<ByteCode>& Code)
@@ -218,6 +222,8 @@ inline bool RE_VM::vm_match(const std::string& target,
     else
     {
         std::string s = reinterpret_cast<const char*>(exp_t);
+        // std::cout << "match: " << target.substr(_matched_index, s.length())
+        //     << " " << s << std::endl;
         if (target.compare(_matched_index, s.length(), s) == 0)
             return _vm_match_ok(s.length());
         return _vm_backtrack();
@@ -251,12 +257,14 @@ inline bool RE_VM::_vm_backtrack()
 
 inline void RE_VM::vm_enter()
 {
+    vm_switch_eval_stack();
     _sub_matched_start = _matched_index;
     _code_ip++;
 }
 
 inline void RE_VM::vm_leave(const std::string& target)
 {
+    vm_switch_eval_stack();
     _sub_matched_len = _matched_index - _sub_matched_start;
     regex_result.sub_matched.push_back(target.substr(_sub_matched_start, _sub_matched_len));
     _sub_matched_start = _sub_matched_len = 0;
@@ -279,6 +287,7 @@ inline bool RE_VM::vm_range(const std::string& target, std::vector<ByteCode>& Co
     auto a = reinterpret_cast<std::ptrdiff_t>(Code[_code_ip].exp1),
          b = reinterpret_cast<std::ptrdiff_t>(Code[_code_ip].exp2);
 
+    // std::cout << "range: " << target[_matched_index] << std::endl;
     if (is_range_in(target[_matched_index], a, b))
         return _vm_match_ok();
     else
@@ -292,18 +301,17 @@ inline void RE_VM::vm_zero_width_assert(const std::string& target)
         case TOKEN::FORWARD_PRE_MATCH: case TOKEN::FORWARD_PRE_MATCH_NOT:
             _matched_index = ZeroWidthAssert_stack.top()._matched_index;
             _matched_len = ZeroWidthAssert_stack.top()._matched_len;
-            ZeroWidthAssert_stack.pop();
             break;
         case TOKEN::BACKWORD_PRE_MATCH: case TOKEN::BACKWORD_PRE_MATCH_NOT:
             _target_start_pos += _matched_len - ZeroWidthAssert_stack.top()._matched_len;
             _matched_len -= _matched_len - ZeroWidthAssert_stack.top()._matched_len;
-            ZeroWidthAssert_stack.pop();
             break;
         case TOKEN::NORMAL_PRE_MATCH: break;
         default:
             /* ERROR 不应该出现其他类型 */
             break;
     }
+    ZeroWidthAssert_stack.pop();
     _code_ip++;
 }
 

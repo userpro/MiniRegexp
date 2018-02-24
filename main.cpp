@@ -34,45 +34,49 @@ int main()
     t = clock();
 
     std::string test_str[][2] = {
-        {"a(c|b|o\\d)*.", "daccaaafao0da ac1cgg"},  /* () | * \d */
-        {"\\bworld."    , "world world1"        },  /* \b */
-        {"\\\\a"        , "wf\\asxc"            },
-        {"do(es)+"      , "doesng"              },  /* () */
-        {"(a|b){1,2}"   , "abbb"                },
-        {"a(c|b|o\\d)*.", "daccaaafao0da ac1cgg"},
-        {"\\bworld."    , "world world1"        },
-        {"\\\\a"        , "wf\\asxc"            },
-        {"do(es)+"      , "doesng"              },
-        {"(a|b){1,2}"   , "abbb"                },
-        {"o+?"          , "oooo"                }, /* ?(非)贪婪 */
-        {"a(o*?)d"      , "aoood"               }, /* ?(非)贪婪 */
-        {"^abc"         , "abcabc"              }, /* START */
-        {"abc$"         , "abc\nabc"            }, /* MULTILINE END */
-        {"a.c"          , "a\nc"                }, /* DOTALL */
-        {"[abc]*"       , "aaddab"              },     /* [] */
-        {"[^a-dh-mzn]"  , "axyawczmladddknwdnjkgnoiab"},   /* [] */
-        {"\\d*"         , "12385567"            },
-        {"a.*b"         , "aaabaab"             },
-        {"^[0-9]*[1-9][0-9]*", "2sd134\n123sd2" },
-        {"a{3,}b{1,2}d{1,22}e{11,12}f{1}", "aaaabbddeeeeeeeeeeeff"},
-        {
-            "^([a-zA-Z0-9_\\-\\.]+)@((\\[[0-9]{1,3}\\.[0-9]{1,3}\\.[0-9]{1,3}\\.)|(([a-zA-Z0-9\\-]+\\.)+))([a-zA-Z]{2,4}|[0-9]{1,3})(\\]?)$", 
-            "john@johnmaddock.co.uk"
-        },
-        {"a{2,}?"       , "aaaaaaa"             }, /* {}?懒惰模式 */
-        {"a*?"          , "aaba"                }, /* *?懒惰模式 */
-        {"a+?"          , "aaaaa"               }, /* +?懒惰模式 */
-        {"a??"          , "aaaaa"               }, /* ??懒惰模式 */    
-        {"(ab)*cd"      , "aaabcd"              },
-        {"(2)(2)\\1\\2" , "22222"               },
-        {"\\d{1,3}\\.\\d{1,3}\\.\\d{1,3}\\.\\d{1,3}", "192.168.0.255"},
-        {"\\u00a9\\x41\\010111", "©AA11"        },
-        {"(?:as|bd)vv"  , "asvv"                },
-        {"(?<=95|98|NT|\\d*)Windows.", "2000Windowsa 3.1Windowsb"},
-        {"(?<!95|98|NT|\\d*)Windows.", "3.1Windowsc2000Windowsa 3.1Windowsb"},
-        {"\\d*", "12345"},
-        {"industr(?:y|\\d)", "industr2"       },
-        {"^([a-z0-9_.-]+)@([0-9a-z.-]+)\\.([a-z.]{2,6})$", "437773935@qq.com"},
+        // {"a(c|b|o\\d)*.", "daccaaafao0da ac1cgg"},  /* () | * \d */
+        // {"\\bworld."    , "world world1"        },  /* \b */
+        // {"\\\\a"        , "wf\\asxc"            },
+        // {"do(es)+"      , "doesng"              },  /* () */
+        // {"(a|b){1,2}"   , "abbb"                },
+        // {"a(c|b|o\\d)*.", "daccaaafao0da ac1cgg"},
+        // {"\\bworld."    , "world world1"        },
+        // {"\\\\a"        , "wf\\asxc"            },
+        // {"do(es)+"      , "doesng"              },
+        // {"(a|b){1,2}"   , "abbb"                },
+        // {"o+?"          , "oooo"                }, /* ?(非)贪婪 */
+        // {"a(o*?)d"      , "aoood"               }, /* ?(非)贪婪 */
+        // {"^abc"         , "abcabc"              }, /* START */
+        // {"abc$"         , "abc\nabc"            }, /* MULTILINE END */
+        // {"a.c"          , "a\nc"                }, /* DOTALL */
+        // {"[abc]*"       , "aaddab"              },     /* [] */
+        // {"[^a-dh-mzn]"  , "axyawczmladddknwdnjkgnoiab"},   /* [] */
+        // {"\\d*"         , "12385567"            },
+        // {"a.*b"         , "aaabaab"             },
+        // {"^[0-9]*[1-9][0-9]*", "2sd134\n123sd2" },
+        // {"a{3,}b{1,2}d{1,22}e{11,12}f{1}", "aaaabbddeeeeeeeeeeeff"},
+        // {
+        //     "^([a-zA-Z0-9_\\-\\.]+)@((\\[[0-9]{1,3}\\.[0-9]{1,3}\\.[0-9]{1,3}\\.)|(([a-zA-Z0-9\\-]+\\.)+))([a-zA-Z]{2,4}|[0-9]{1,3})(\\]?)$", 
+        //     "john@johnmaddock.co.uk"
+        // },
+        // {"a{2,}?"       , "aaaaaaa"             }, /* {}?懒惰模式 */
+        // {"a*?"          , "aaba"                }, /* *?懒惰模式 */
+        // {"a+?"          , "aaaaa"               }, /* +?懒惰模式 */
+        // {"a??"          , "aaaaa"               }, /* ??懒惰模式 */    
+        // {"(ab)*cd"      , "aaabcd"              },
+        // {"(2)(2)\\1\\2" , "22222"               },
+        // {"\\u00a9\\x41\\010111", "©AA11"        },
+        // {"(?:as|bd)vv"  , "asvv"                },
+        // {"(?<=95|98|NT|\\d*)Windows.", "2000Windowsa 3.1Windowsb"},
+        // {"(?<!95|98|NT|\\d*)Windows.", "3.1Windowsc2000Windowsa 3.1Windowsb"},
+        // {"industr(?:y|\\d)", "industr2"         },
+        // {"^([a-z0-9_.-]+)@([0-9a-z.-]+)\\.([a-z.]{2,6})$", "437773935@qq.com"},
+        {"\\w+(?=ing)"  , "ying hing"              },
+        {"[a-zA-z]+://[^ \f\n\r\t\v]*", "https://www.trilines.com:80/scripting/default.htm"},
+        // {"^([a-zA-Z0-9_\\-\\.]+)@((\\[[0-9]{1,3}\\.[0-9]{1,3}\\.[0-9]{1,3}\\.)|(([a-zA-Z0-9\\-]+\\.)+))([a-zA-Z]{2,4}|[0-9]{1,3})(\\]?)$",
+        //  "john@johnmaddock.co.uk"},
+        // {"(?<=\\s)\\d+(?=\\s)", "12343 4234  65"},
+        {"[1-9][0-9]{4,}", "437773935"},
 
         /* ERROR empty loop! dead loop! */
         // {"(a*)*"        , "aaaaaaaaaaaaaaaaaaaaaaaaaaaab"},

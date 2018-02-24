@@ -58,7 +58,7 @@ namespace mini_regexp_vm
             zero_width_assert_stack_t(TOKEN _tk, std::ptrdiff_t minx, std::ptrdiff_t mlen):tk(_tk),_matched_index(minx),_matched_len(mlen) {}
         };
 
-        /* Sub  Split Stack给零宽断言创建独立栈空间 在离开零宽断言代码段时清理 */
+        /* Sub  Split Stack给子表达式创建独立栈空间 在离开代码段时清理 */
         std::stack<split_stack_t> Split_stack, Sub_Split_stack;
         std::stack<repeat_stack_t> Repeat_stack;
         std::stack<zero_width_assert_stack_t> ZeroWidthAssert_stack;
@@ -80,6 +80,7 @@ namespace mini_regexp_vm
             std::vector<ByteCode>& Code, RE_Config& config);
         void vm_stack_init();
         void vm_result_init();
+        void vm_switch_eval_stack();
 
         bool vm_match(const std::string& target,
                       std::vector<ByteCode>& Code,

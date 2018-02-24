@@ -20,17 +20,25 @@ namespace mini_regexp_token
         RBRACE,     /* '}' */
         ZERO_WIDTH_ASSERT_LBRACKET, /* (? */
         ZERO_WIDTH_ASSERT_RBRACKET, /* ) */
-        EXP,        /* stack parse */
-        ANY = -1,   /* '.' */
-        INF = -2,   /* {n, m} -> m */
-        NONE = -3,  /* {n, m} -> m */
-        GROUP = -4, /* \1 \2 ... etc */
+
+        INTERN_TOKEN = -120,
+
+        EXP,   /* stack parse */
+        ANY,   /* '.' */
+        BLANK, /* \b */  NOT_BLANK, /* \B */
+        DIGIT, /* \d */  NOT_DIGIT, /* \D */
+        SPACE, /* \s */  NOT_SPACE, /* \S */
+        WWORD, /* \w */  NOT_WWORD, /* \W */
+        
+        INF,   /* {n, m} -> m */
+        NONE,  /* {n, m} -> m */
+        GROUP, /* \1 \2 ... etc */
         /* 零宽断言 */
-        FORWARD_PRE_MATCH = -5,
-        FORWARD_PRE_MATCH_NOT = -6,
-        BACKWORD_PRE_MATCH = -7,
-        BACKWORD_PRE_MATCH_NOT = -8,
-        NORMAL_PRE_MATCH = -9,
+        FORWARD_PRE_MATCH,
+        FORWARD_PRE_MATCH_NOT,
+        BACKWORD_PRE_MATCH,
+        BACKWORD_PRE_MATCH_NOT,
+        NORMAL_PRE_MATCH,
     };
 }
 

@@ -465,6 +465,66 @@ bool RE_Parser::parse_brace(std::string& exp, bool greedy_mode)
     return true;
 }
 
+/* 解析[]中的转义字符 */
+std::ptrdiff_t RE_Parser::parse_square_escape_char(
+    std::string& s, std::ptrdiff_t _index, std::string& res)
+{
+    auto spec_ch = s[++_index];
+    if (mini_keywords.is_escape_char(spec_ch))
+    {
+        res = mini_keywords.get_escape_char(spec_ch);
+        return _index + 1;
+    }
+    else
+    {
+        std::string num;
+        switch (spec_ch)
+        {
+            /* 八进制 \0XXX */
+            case '0':
+            {
+                std::string s;
+                num = s.substr(_index + 1, 3);
+                res = s + char(str2oct(num));
+                _index += 4;
+                break;
+            }
+            /* 十进制 \X... */
+            case'1':case'2':case'3':case'4':case'5':
+            case'6':case'7':case'8':case'9':
+                _index += str_get_digit(s, _index, num);
+                res = num;
+                break;
+            case 'x': /* 16进制: \xXX */
+            {
+                std::string s;
+                num = s.substr(_index + 1, 2);
+                res = s + char(str2hex(num));
+                _index += 3;
+                break;
+            }
+
+            case 'u': /* Unicode \uXXXX */
+            {
+                std::string s1, s2;
+                num = s.substr(_index + 1, 2);
+                auto num2 = s.substr(_index + 3, 2);
+                res = s1 + char(str2hex(num))+ char(str2hex(num2));
+                // std::cout << Text.back().length() << std::endl;
+                _index += 5;
+                break;
+            }
+
+            default:
+                /* 加到string中 \X */
+                res = s.substr(_index, 1);
+                _index += 1;
+                break;
+        }
+    }
+    return _index;
+}
+
 bool RE_Parser::parse_square_brace(std::string& s)
 {
     bool _not = false;
@@ -481,6 +541,7 @@ bool RE_Parser::parse_square_brace(std::string& s)
         _not = false;
     }
 
+    std::vector<std::string> sub_string; /* \w \W \d \D... */
     while (_index < s.length())
     {
         /* 向后看2个 如果存在a-z这样的表达式 */
@@ -492,14 +553,26 @@ bool RE_Parser::parse_square_brace(std::string& s)
         /* 普通匹配一个字符 这里使用RANGE特殊情况 */
         else
         {
-            ins.push_back(CODE_ELM(BYTE_CODE::RANGE, s[_index], s[_index]));
-            _index++;
+            if (s[_index] == '\\')
+            {
+                std::string res;
+                _index = parse_square_escape_char(s, _index, res);
+                sub_string.push_back(res);
+                // std::cout << res << " " << std::endl;
+            }
+            else
+            {
+                ins.push_back(CODE_ELM(BYTE_CODE::RANGE, s[_index], s[_index]));
+                _index++;
+            }
         }
     }
 
+    /* 组合当前表达式---start */
     parse_stack_t exp;
     exp.ip = Code.size();
     exp.tk = TOKEN::EXP;
+    exp.n = 0;
     ByteCode bc1, bc2;
     /* 预组合 */
     if (ins.size() == 1)
@@ -519,7 +592,7 @@ bool RE_Parser::parse_square_brace(std::string& s)
     }
     else
     {
-        std::cout << "empty []." << std::endl;
+        std::cout << "parse_square_brace err." << std::endl;
         return false;
     }
 
@@ -531,7 +604,8 @@ bool RE_Parser::parse_square_brace(std::string& s)
         Code.insert(Code.begin() + exp.ip + exp.n + 1, bc1);
         Code.insert(Code.begin() + exp.ip, CODE_ELM(BYTE_CODE::SPLIT, 1, exp.n + 2));
         exp.n += 3;
-    }
+    }    
+    /* 组合当前表达式---end */
 
     if (_not)
     {
@@ -546,9 +620,11 @@ bool RE_Parser::parse_square_brace(std::string& s)
         Code.insert(Code.begin() + exp.ip + exp.n + 1, CODE_ELM(BYTE_CODE::HALT, 0, 0));
         Code.insert(Code.begin() + exp.ip + exp.n + 2, CODE_ELM(BYTE_CODE::MATCH, TOKEN::ANY, 0));
         exp.n += 3;
+        Parser_Stack.back().n += 3;
     }
-
+    
     Parser_Stack.push_back(exp);
+
     return true;
 }
 
